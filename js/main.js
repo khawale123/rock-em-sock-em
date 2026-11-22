@@ -19,7 +19,6 @@ const els = {
   screenLobby: $('screen-lobby'),
   screenGame: $('screen-game'),
 
-  fighterSelector: $('fighter-selector'),
   roundsSelector: $('rounds-selector'),
   onlineIdle: $('online-idle'),
   onlineWaiting: $('online-waiting'),
@@ -49,6 +48,7 @@ const els = {
   hudRedTag: $('hud-red-tag'),
   hudRedRounds: $('hud-red-rounds'),
   hudRedHp: $('hud-red-hp'),
+  hudRedHpTrail: $('hud-red-hp-trail'),
   hudRedHpVal: $('hud-red-hp-val'),
   hudRedStam: $('hud-red-stam'),
 
@@ -57,6 +57,7 @@ const els = {
   hudBlueTag: $('hud-blue-tag'),
   hudBlueRounds: $('hud-blue-rounds'),
   hudBlueHp: $('hud-blue-hp'),
+  hudBlueHpTrail: $('hud-blue-hp-trail'),
   hudBlueHpVal: $('hud-blue-hp-val'),
   hudBlueStam: $('hud-blue-stam'),
 
@@ -94,10 +95,9 @@ const els = {
 };
 
 let selectedBestOf = 3;
-let selectedFighter = 'wifebun'; // 'wifebun' ('red') | 'husbun' ('blue')
-let mySide = 'red'; // 'red' (Wifebun) | 'blue' (Husbun)
-let hostSide = 'red';
-let currentMode = 'cpu'; // 'cpu' | 'local' | 'online-host' | 'online-guest'
+let warmupSide = 'wifebun'; // used in solo warmup vs CPU
+let mySide = 'red';         // 'red' (Wifebun) | 'blue' (Husbun)
+let currentMode = 'cpu';    // 'cpu' | 'local' | 'online-host' | 'online-guest'
 let currentCpuDiff = 'medium';
 let opponentProfile = { name: 'Opponent', email: '', picture: '' };
 let myRematchReady = false;
@@ -191,10 +191,12 @@ const engine = new GameEngine(els.canvas, {
     const redPct = Math.max(0, Math.round(hud.red.hp));
     const bluePct = Math.max(0, Math.round(hud.blue.hp));
     els.hudRedHp.style.width = `${redPct}%`;
+    els.hudRedHpTrail.style.width = `${redPct}%`;
     els.hudRedHpVal.textContent = `${redPct}%`;
     els.hudRedStam.style.width = `${Math.round(hud.red.stamina)}%`;
 
     els.hudBlueHp.style.width = `${bluePct}%`;
+    els.hudBlueHpTrail.style.width = `${bluePct}%`;
     els.hudBlueHpVal.textContent = `${bluePct}%`;
     els.hudBlueStam.style.width = `${Math.round(hud.blue.stamina)}%`;
 
@@ -215,7 +217,7 @@ const engine = new GameEngine(els.canvas, {
     els.btnRematch.disabled = false;
 
     const winnerName = winner === 'red' ? 'WIFEBUN' : 'HUSBUN';
-    els.matchResultBadge.textContent = 'BEATDOWN SESH COMPLETE!';
+    els.matchResultBadge.textContent = '💕 BEATDOWN SESH COMPLETE! 💕';
     els.matchWinnerTitle.textContent = `${winnerName} WINS!`;
     els.matchWinnerTitle.style.color = winner === 'red' ? 'var(--pink)' : 'var(--blue)';
     els.matchWinnerSub.textContent = `Final Score: Wifebun ${redWins} - ${blueWins} Husbun`;
@@ -238,14 +240,14 @@ function renderRoundPips(container, total, won, wonClass) {
 }
 
 // ==========================
-// NETWORKING (ONLINE 1v1)
+// NETWORKING (ONLINE 1v1 — Host is ALWAYS Husbun, Invited Guest is ALWAYS Wifebun!)
 // ==========================
 const net = new NetworkManager({
   onConnect: (role) => {
     if (role === 'host') {
-      els.waitingStatus.textContent = 'Opponent connected! Starting beatdown sesh...';
+      els.waitingStatus.textContent = 'Wifebun connected! Starting beatdown sesh...';
     } else {
-      els.joiningStatus.textContent = 'Connected! Hopping into the ring...';
+      els.joiningStatus.textContent = 'Connected! Stepping in as Wifebun...';
     }
   },
 
@@ -256,13 +258,11 @@ const net = new NetworkManager({
   onMessage: (msg) => {
     switch (msg.type) {
       case 'hello':
-        opponentProfile = msg.profile || { name: 'Opponent', email: '', picture: '' };
+        opponentProfile = msg.profile || { name: 'Wifebun', email: '', picture: '' };
         if (net.role === 'host') {
-          hostSide = selectedFighter === 'husbun' ? 'blue' : 'red';
           net.send({
             type: 'start',
             bestOf: selectedBestOf,
-            hostSide,
             hostProfile: auth.getProfile(),
           });
           launchMatch('online-host');
@@ -272,19 +272,20 @@ const net = new NetworkManager({
       case 'start':
         if (msg.hostProfile) opponentProfile = msg.hostProfile;
         selectedBestOf = msg.bestOf || 3;
-        hostSide = msg.hostSide || 'red';
         launchMatch('online-guest');
         break;
 
       case 'input':
+        // Guest is ALWAYS Wifebun ('red')!
         if (currentMode === 'online-host') {
-          const guestSide = hostSide === 'red' ? 'blue' : 'red';
           if (typeof msg.moveIndex === 'number') {
-            engine.triggerMove(guestSide, msg.moveIndex);
+            engine.triggerMove('red', msg.moveIndex);
+          } else if (msg.action === 'jump') {
+            engine.triggerJump('red');
           } else if (msg.action === 'dodge') {
-            engine.triggerDodge(guestSide);
-          } else if (msg.action === 'block') {
-            engine.setBlock(guestSide, msg.active);
+            engine.triggerDodge('red');
+          } else if (msg.action === 'left' || msg.action === 'right' || msg.action === 'block') {
+            engine.setInput('red', msg.action, msg.active);
           }
         }
         break;
@@ -307,7 +308,6 @@ const net = new NetworkManager({
           net.send({
             type: 'start',
             bestOf: selectedBestOf,
-            hostSide,
             hostProfile: auth.getProfile(),
           });
           launchMatch('online-host');
@@ -321,7 +321,7 @@ const net = new NetworkManager({
 
   onDisconnect: () => {
     if (currentMode === 'online-host' || currentMode === 'online-guest') {
-      showToast('Opponent left the ring.', 3500);
+      showToast('Opponent left the match.', 3500);
       returnToLobby();
     }
   },
@@ -351,36 +351,28 @@ function launchMatch(mode, cpuDiff = currentCpuDiff) {
   let redProfile, blueProfile;
 
   if (mode === 'cpu') {
-    mySide = selectedFighter === 'husbun' ? 'blue' : 'red';
+    mySide = warmupSide === 'husbun' ? 'blue' : 'red';
     if (mySide === 'red') {
-      redProfile = { name: `WIFEBUN`, picture: me.picture };
-      blueProfile = { name: `HUSBUN (CPU)`, picture: '' };
+      redProfile = { name: 'WIFEBUN', picture: me.picture };
+      blueProfile = { name: 'HUSBUN (CPU)', picture: '' };
     } else {
-      redProfile = { name: `WIFEBUN (CPU)`, picture: '' };
-      blueProfile = { name: `HUSBUN`, picture: me.picture };
+      redProfile = { name: 'WIFEBUN (CPU)', picture: '' };
+      blueProfile = { name: 'HUSBUN', picture: me.picture };
     }
   } else if (mode === 'local') {
     mySide = 'red';
     redProfile = { name: 'WIFEBUN', picture: '' };
     blueProfile = { name: 'HUSBUN', picture: '' };
   } else if (mode === 'online-host') {
-    mySide = hostSide;
-    if (hostSide === 'red') {
-      redProfile = { name: `WIFEBUN (${me.name})`, picture: me.picture };
-      blueProfile = { name: `HUSBUN (${opponentProfile.name})`, picture: opponentProfile.picture };
-    } else {
-      redProfile = { name: `WIFEBUN (${opponentProfile.name})`, picture: opponentProfile.picture };
-      blueProfile = { name: `HUSBUN (${me.name})`, picture: me.picture };
-    }
+    // Host is ALWAYS Husbun ('blue'), Invited player is ALWAYS Wifebun ('red')!
+    mySide = 'blue';
+    redProfile = { name: `WIFEBUN (${opponentProfile.name})`, picture: opponentProfile.picture };
+    blueProfile = { name: `HUSBUN (${me.name})`, picture: me.picture };
   } else {
-    mySide = hostSide === 'red' ? 'blue' : 'red';
-    if (mySide === 'red') {
-      redProfile = { name: `WIFEBUN (${me.name})`, picture: me.picture };
-      blueProfile = { name: `HUSBUN (${opponentProfile.name})`, picture: opponentProfile.picture };
-    } else {
-      redProfile = { name: `WIFEBUN (${opponentProfile.name})`, picture: opponentProfile.picture };
-      blueProfile = { name: `HUSBUN (${me.name})`, picture: me.picture };
-    }
+    // Invited guest is ALWAYS Wifebun ('red')!
+    mySide = 'red';
+    redProfile = { name: `WIFEBUN (${me.name})`, picture: me.picture };
+    blueProfile = { name: `HUSBUN (${opponentProfile.name})`, picture: opponentProfile.picture };
   }
 
   renderAvatar(els.hudRedAvatar, redProfile, '🎀');
@@ -419,13 +411,6 @@ function returnToLobby() {
 // ==========================
 // LOBBY EVENTS
 // ==========================
-els.fighterSelector.addEventListener('click', (e) => {
-  const btn = e.target.closest('.fighter-btn');
-  if (!btn) return;
-  selectedFighter = btn.dataset.fighter || 'wifebun';
-  els.fighterSelector.querySelectorAll('.fighter-btn').forEach((b) => b.classList.toggle('active', b === btn));
-});
-
 els.roundsSelector.addEventListener('click', (e) => {
   const btn = e.target.closest('.seg-btn');
   if (!btn) return;
@@ -441,13 +426,13 @@ els.btnCreateRoom.addEventListener('click', async () => {
     const code = await net.hostRoom(auth.getProfile());
     els.displayRoomCode.textContent = code;
     els.inputInviteLink.value = auth.buildInviteUrl(code);
-    els.waitingStatus.textContent = 'Waiting for your partner to join...';
+    els.waitingStatus.textContent = 'Waiting for Wifebun to hop in...';
     setOnlinePanel('waiting');
   } catch (err) {
     showToast(err.message || 'Could not create match.', 3500);
   } finally {
     els.btnCreateRoom.disabled = false;
-    els.btnCreateRoom.innerHTML = '<span class="btn-icon">🥊</span> Create 1v1 Match &amp; Invite';
+    els.btnCreateRoom.innerHTML = '<span class="btn-icon">💌</span> Create 1v1 Match &amp; Invite Link';
   }
 });
 
@@ -456,7 +441,7 @@ async function copyInviteLink() {
   const link = auth.buildInviteUrl(net.roomCode);
   try {
     await navigator.clipboard.writeText(link);
-    showToast('Invite link copied! Send it to start the beatdown sesh.');
+    showToast('Invite link copied! She joins automatically as Wifebun 🎀');
   } catch (_) {
     els.inputInviteLink.select();
     window.prompt('Copy this invite link:', link);
@@ -472,12 +457,12 @@ els.inputInviteLink.addEventListener('click', () => {
 els.btnShareNative.addEventListener('click', async () => {
   if (!net.roomCode) return;
   const link = auth.buildInviteUrl(net.roomCode);
-  const text = `🐰🥊 Join me in Wifebun vs Husbun Beatdown Sesh! Click to fight: ${link}`;
+  const text = `🐰💕 Come play Wifebun vs Husbun Beatdown Sesh with me! Click to join as Wifebun: ${link}`;
   if (navigator.share) {
     try {
       await navigator.share({
-        title: 'Wifebun vs Husbun — Beatdown Sesh',
-        text: '🐰🥊 Join me in Wifebun vs Husbun Beatdown Sesh!',
+        title: 'Wifebun ♥ Husbun — Beatdown Sesh',
+        text: '🐰💕 Join me in Wifebun vs Husbun Beatdown Sesh!',
         url: link,
       });
       return;
@@ -512,7 +497,7 @@ els.btnCancelJoin.addEventListener('click', () => {
 async function handleJoinCode(code) {
   sound.init();
   setOnlinePanel('joining');
-  els.joiningStatus.textContent = `Connecting to match ${code.toUpperCase()}...`;
+  els.joiningStatus.textContent = `Joining match ${code.toUpperCase()} as Wifebun...`;
   try {
     await net.joinRoom(code, auth.getProfile());
   } catch (err) {
@@ -540,11 +525,7 @@ document.querySelectorAll('.btn-diff').forEach((btn) => {
 
 document.querySelectorAll('.btn-warmup-side').forEach((btn) => {
   btn.addEventListener('click', () => {
-    const side = btn.dataset.side || 'wifebun';
-    selectedFighter = side;
-    els.fighterSelector.querySelectorAll('.fighter-btn').forEach((b) => {
-      b.classList.toggle('active', b.dataset.fighter === side);
-    });
+    warmupSide = btn.dataset.side || 'wifebun';
     launchMatch('cpu', currentCpuDiff);
   });
 });
@@ -576,7 +557,6 @@ els.btnRematch.addEventListener('click', () => {
     net.send({
       type: 'start',
       bestOf: selectedBestOf,
-      hostSide,
       hostProfile: auth.getProfile(),
     });
     launchMatch('online-host');
@@ -627,7 +607,7 @@ els.btnSound.addEventListener('click', () => {
 });
 
 // ==========================
-// GAME CONTROLS (4 UNIQUE MOVES + GUARD)
+// 2D SIDE-SCROLLING FIGHTER CONTROLS (KEYBOARD + ON-SCREEN PAD)
 // ==========================
 function sendPlayerAction(action, active = true) {
   if (!els.screenGame.classList.contains('active')) return;
@@ -638,22 +618,23 @@ function sendPlayerAction(action, active = true) {
   if (currentMode === 'online-guest') {
     if (moveMatch) {
       net.send({ type: 'input', moveIndex: Number(moveMatch[1]) });
-    } else if (action === 'dodge') {
-      net.send({ type: 'input', action: 'dodge' });
-    } else if (action === 'block') {
-      net.send({ type: 'input', action: 'block', active });
+    } else if (action === 'jump' || action === 'dodge') {
+      if (active) net.send({ type: 'input', action });
+    } else if (action === 'left' || action === 'right' || action === 'block') {
+      net.send({ type: 'input', action, active });
     }
     return;
   }
 
-  // Host, CPU, or P1 (Wifebun) in Local 2P
   const side = currentMode === 'local' ? 'red' : mySide;
   if (moveMatch) {
     engine.triggerMove(side, Number(moveMatch[1]));
+  } else if (action === 'jump') {
+    if (active) engine.triggerJump(side);
   } else if (action === 'dodge') {
-    engine.triggerDodge(side);
-  } else if (action === 'block') {
-    engine.setBlock(side, active);
+    if (active) engine.triggerDodge(side);
+  } else if (action === 'left' || action === 'right' || action === 'block') {
+    engine.setInput(side, action, active);
   }
 }
 
@@ -664,53 +645,94 @@ window.addEventListener('keydown', (e) => {
 
   const key = e.key.toLowerCase();
 
-  // Primary player controls (A/W/D/E or 1/2/3/4, Q/Shift for Dodge, S/Space for Guard)
-  if (key === 'a' || key === '1') {
-    sendPlayerAction('move0');
-    flashArcadeBtn('move0', true);
-  } else if (key === 'w' || key === '2') {
-    sendPlayerAction('move1');
-    flashArcadeBtn('move1', true);
-  } else if (key === 'd' || key === '3') {
-    sendPlayerAction('move2');
-    flashArcadeBtn('move2', true);
-  } else if (key === 'e' || key === '4') {
-    sendPlayerAction('move3');
-    flashArcadeBtn('move3', true);
-  } else if (key === 'q' || key === 'shift') {
-    sendPlayerAction('dodge');
-    flashArcadeBtn('dodge', true);
-  } else if (key === 's' || key === ' ') {
-    e.preventDefault();
-    sendPlayerAction('block', true);
-    flashArcadeBtn('block', true);
+  // Local 2P splits keyboard between Wifebun (WASD + 1-4 + Q) and Husbun (Arrows + JKLU + Shift)
+  if (currentMode === 'local') {
+    if (key === 'a') { engine.setInput('red', 'left', true); flashArcadeBtn('left', true); }
+    else if (key === 'd') { engine.setInput('red', 'right', true); flashArcadeBtn('right', true); }
+    else if (key === 'w') { engine.triggerJump('red'); flashArcadeBtn('jump', true); }
+    else if (key === 's') { engine.setInput('red', 'block', true); flashArcadeBtn('block', true); }
+    else if (key === 'q') { engine.triggerDodge('red'); flashArcadeBtn('dodge', true); }
+    else if (key === '1') { engine.triggerMove('red', 0); flashArcadeBtn('move0', true); }
+    else if (key === '2') { engine.triggerMove('red', 1); flashArcadeBtn('move1', true); }
+    else if (key === '3') { engine.triggerMove('red', 2); flashArcadeBtn('move2', true); }
+    else if (key === '4') { engine.triggerMove('red', 3); flashArcadeBtn('move3', true); }
+
+    else if (key === 'arrowleft') { e.preventDefault(); engine.setInput('blue', 'left', true); }
+    else if (key === 'arrowright') { e.preventDefault(); engine.setInput('blue', 'right', true); }
+    else if (key === 'arrowup') { e.preventDefault(); engine.triggerJump('blue'); }
+    else if (key === 'arrowdown') { e.preventDefault(); engine.setInput('blue', 'block', true); }
+    else if (key === 'shift') { engine.triggerDodge('blue'); }
+    else if (key === 'j') { engine.triggerMove('blue', 0); }
+    else if (key === 'k') { engine.triggerMove('blue', 1); }
+    else if (key === 'l') { engine.triggerMove('blue', 2); }
+    else if (key === 'u') { engine.triggerMove('blue', 3); }
+    return;
   }
 
-  // Local 2P second player (Husbun: J / I / L / O + U Dodge / K Guard)
-  if (currentMode === 'local') {
-    if (key === 'j') engine.triggerMove('blue', 0);
-    else if (key === 'i') engine.triggerMove('blue', 1);
-    else if (key === 'l') engine.triggerMove('blue', 2);
-    else if (key === 'o') engine.triggerMove('blue', 3);
-    else if (key === 'u') engine.triggerDodge('blue');
-    else if (key === 'k') engine.setBlock('blue', true);
+  // Solo Warmup & Online 1v1: BOTH WASD & Arrows move/jump/guard; BOTH JKLU & 1-4 trigger moves!
+  if (key === 'a' || key === 'arrowleft') {
+    if (key === 'arrowleft') e.preventDefault();
+    sendPlayerAction('left', true);
+    flashArcadeBtn('left', true);
+  } else if (key === 'd' || key === 'arrowright') {
+    if (key === 'arrowright') e.preventDefault();
+    sendPlayerAction('right', true);
+    flashArcadeBtn('right', true);
+  } else if (key === 'w' || key === 'arrowup') {
+    if (key === 'arrowup') e.preventDefault();
+    sendPlayerAction('jump', true);
+    flashArcadeBtn('jump', true);
+  } else if (key === 's' || key === 'arrowdown') {
+    if (key === 'arrowdown') e.preventDefault();
+    sendPlayerAction('block', true);
+    flashArcadeBtn('block', true);
+  } else if (key === ' ' || key === 'shift' || key === 'q') {
+    if (key === ' ') e.preventDefault();
+    sendPlayerAction('dodge', true);
+    flashArcadeBtn('dodge', true);
+  } else if (key === 'j' || key === '1') {
+    sendPlayerAction('move0', true);
+    flashArcadeBtn('move0', true);
+  } else if (key === 'k' || key === '2') {
+    sendPlayerAction('move1', true);
+    flashArcadeBtn('move1', true);
+  } else if (key === 'l' || key === '3') {
+    sendPlayerAction('move2', true);
+    flashArcadeBtn('move2', true);
+  } else if (key === 'u' || key === '4') {
+    sendPlayerAction('move3', true);
+    flashArcadeBtn('move3', true);
   }
 });
 
 window.addEventListener('keyup', (e) => {
   const key = e.key.toLowerCase();
-  if (key === 'a' || key === '1') flashArcadeBtn('move0', false);
-  if (key === 'w' || key === '2') flashArcadeBtn('move1', false);
-  if (key === 'd' || key === '3') flashArcadeBtn('move2', false);
-  if (key === 'e' || key === '4') flashArcadeBtn('move3', false);
-  if (key === 'q' || key === 'shift') flashArcadeBtn('dodge', false);
-  if (key === 's' || key === ' ') {
-    sendPlayerAction('block', false);
-    flashArcadeBtn('block', false);
+
+  if (currentMode === 'local') {
+    if (key === 'a') { engine.setInput('red', 'left', false); flashArcadeBtn('left', false); }
+    else if (key === 'd') { engine.setInput('red', 'right', false); flashArcadeBtn('right', false); }
+    else if (key === 'w') flashArcadeBtn('jump', false);
+    else if (key === 's') { engine.setInput('red', 'block', false); flashArcadeBtn('block', false); }
+    else if (key === 'q') flashArcadeBtn('dodge', false);
+    else if (key === '1') flashArcadeBtn('move0', false);
+    else if (key === '2') flashArcadeBtn('move1', false);
+    else if (key === '3') flashArcadeBtn('move2', false);
+    else if (key === '4') flashArcadeBtn('move3', false);
+    else if (key === 'arrowleft') engine.setInput('blue', 'left', false);
+    else if (key === 'arrowright') engine.setInput('blue', 'right', false);
+    else if (key === 'arrowdown') engine.setInput('blue', 'block', false);
+    return;
   }
-  if (currentMode === 'local' && key === 'k') {
-    engine.setBlock('blue', false);
-  }
+
+  if (key === 'a' || key === 'arrowleft') { sendPlayerAction('left', false); flashArcadeBtn('left', false); }
+  else if (key === 'd' || key === 'arrowright') { sendPlayerAction('right', false); flashArcadeBtn('right', false); }
+  else if (key === 'w' || key === 'arrowup') flashArcadeBtn('jump', false);
+  else if (key === 's' || key === 'arrowdown') { sendPlayerAction('block', false); flashArcadeBtn('block', false); }
+  else if (key === ' ' || key === 'shift' || key === 'q') flashArcadeBtn('dodge', false);
+  else if (key === 'j' || key === '1') flashArcadeBtn('move0', false);
+  else if (key === 'k' || key === '2') flashArcadeBtn('move1', false);
+  else if (key === 'l' || key === '3') flashArcadeBtn('move2', false);
+  else if (key === 'u' || key === '4') flashArcadeBtn('move3', false);
 });
 
 function flashArcadeBtn(action, pressed) {
@@ -718,9 +740,11 @@ function flashArcadeBtn(action, pressed) {
   if (btn) btn.classList.toggle('pressed', pressed);
 }
 
-// On-screen tactile buttons (touch + mouse)
+// On-screen fighter pad (touch + mouse)
 els.controlsP1.querySelectorAll('.arcade-btn').forEach((btn) => {
   const action = btn.dataset.action;
+  const isHold = action === 'left' || action === 'right' || action === 'block';
+
   const onDown = (e) => {
     e.preventDefault();
     btn.classList.add('pressed');
@@ -729,7 +753,7 @@ els.controlsP1.querySelectorAll('.arcade-btn').forEach((btn) => {
   const onUp = (e) => {
     e.preventDefault();
     btn.classList.remove('pressed');
-    if (action === 'block') sendPlayerAction('block', false);
+    if (isHold) sendPlayerAction(action, false);
   };
 
   btn.addEventListener('pointerdown', onDown);
@@ -764,7 +788,7 @@ function tick(now) {
 requestAnimationFrame(tick);
 
 // ==========================
-// AUTO-JOIN FROM ?room= INVITE LINK
+// AUTO-JOIN FROM ?room= INVITE LINK (Invited player is ALWAYS Wifebun!)
 // ==========================
 const urlParams = new URLSearchParams(window.location.search);
 const inviteRoom = urlParams.get('room');

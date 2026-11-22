@@ -1440,3 +1440,164 @@ kbd {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+/* 2D SIDE-SCROLLING FIGHTER UPGRADES */
+.duo-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  max-width: 820px;
+  width: 100%;
+  margin: 0 auto 20px;
+}
+
+.duo-pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(42, 16, 48, 0.85);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+}
+
+.duo-wifebun {
+  border-color: rgba(255, 119, 186, 0.55);
+  box-shadow: 0 0 20px rgba(255, 92, 168, 0.16);
+}
+
+.duo-husbun {
+  border-color: rgba(92, 158, 255, 0.55);
+  box-shadow: 0 0 20px rgba(92, 158, 255, 0.16);
+}
+
+.duo-pill strong {
+  display: block;
+  font-family: var(--font-arcade);
+  font-size: 1.05rem;
+}
+
+.duo-pill small {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.duo-heart {
+  font-size: 1.5rem;
+  color: var(--gold);
+  text-shadow: 0 0 12px rgba(255, 212, 121, 0.6);
+}
+
+.role-note {
+  background: rgba(255, 119, 186, 0.12);
+  border: 1px solid rgba(255, 182, 218, 0.28);
+  border-radius: var(--radius-sm);
+  padding: 10px 13px;
+  font-size: 0.84rem;
+  color: #ffe8f5;
+  margin-bottom: 14px;
+  line-height: 1.4;
+}
+
+/* Fighting-game delayed damage trail on HP bar */
+.bar-hp {
+  position: relative;
+  height: 14px;
+}
+
+.bar-trail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, #ffea85, #ff9e2c);
+  border-radius: 999px;
+  transition: width 0.45s ease-out;
+}
+
+.bar-trail-right {
+  inset: 0 0 0 auto;
+}
+
+.bar-hp .bar-fill {
+  position: relative;
+  z-index: 1;
+}
+
+/* 2D Fighter Deck (D-Pad + 4 Signature Moves) */
+.fighter-deck {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.dpad-cluster {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(56px, 1fr));
+  gap: 7px;
+  flex: 1 1 310px;
+}
+
+.moves-cluster {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(78px, 1fr));
+  gap: 8px;
+  flex: 1.35 1 390px;
+}
+
+.fighter-deck .arcade-btn {
+  padding: 9px 6px;
+  border-radius: 12px;
+  gap: 2px;
+}
+
+.fighter-deck .btn-cap {
+  font-size: 0.68rem;
+  line-height: 1.05;
+  text-align: center;
+}
+
+.fighter-deck .btn-emoji {
+  font-size: 1.15rem;
+}
+
+.btn-nav {
+  background: linear-gradient(180deg, #4b2354 0%, #311438 100%);
+  border-color: rgba(255, 182, 218, 0.25);
+  box-shadow: 0 4px 0 #1b0820;
+}
+
+.btn-nav:hover {
+  filter: brightness(1.12);
+}
+
+.fighter-deck.theme-blue .btn-move {
+  background: linear-gradient(180deg, #4da0ff 0%, var(--blue) 100%);
+  box-shadow: 0 5px 0 var(--blue-dark), 0 8px 18px var(--blue-glow);
+}
+
+.exit-btn-inline {
+  align-self: stretch;
+  padding: 8px 12px;
+}
+
+@media (max-width: 720px) {
+  .duo-banner {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .duo-heart {
+    display: none;
+  }
+  .dpad-cluster,
+  .moves-cluster {
+    flex: 1 1 100%;
+  }
+  .exit-btn-inline {
+    width: 100%;
+  }
+}

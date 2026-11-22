@@ -273,37 +273,43 @@ class SoundEngine {
     });
   }
 
-  playHeadPop() {
+  playJump() {
     if (!this._canPlay()) return;
     const now = this.ctx.currentTime;
-
     const osc = this.ctx.createOscillator();
-    const lfo = this.ctx.createOscillator();
-    const lfoGain = this.ctx.createGain();
     const gain = this.ctx.createGain();
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(160, now);
-    osc.frequency.exponentialRampToValueAtTime(640, now + 0.16);
-    osc.frequency.exponentialRampToValueAtTime(340, now + 0.55);
-
-    lfo.frequency.setValueAtTime(22, now);
-    lfoGain.gain.setValueAtTime(75, now);
-    lfo.connect(lfoGain);
-    lfoGain.connect(osc.frequency);
-
-    gain.gain.setValueAtTime(0.28, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.62);
-
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(540, now + 0.12);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
-
     osc.start(now);
-    lfo.start(now);
-    osc.stop(now + 0.64);
-    lfo.stop(now + 0.64);
+    osc.stop(now + 0.14);
+  }
 
-    this._noiseBurst(0.16, 0.3, 900);
+  playKO() {
+    if (!this._canPlay()) return;
+    const now = this.ctx.currentTime;
+    // Dramatic fighting-game heavy bass drop + sparkle shimmer!
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(160, now);
+    osc.frequency.exponentialRampToValueAtTime(36, now + 0.55);
+    gain.gain.setValueAtTime(0.32, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.58);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.6);
+
+    this._noiseBurst(0.22, 0.3, 850);
+  }
+
+  playHeadPop() {
+    this.playKO();
   }
 
   playBell() {
