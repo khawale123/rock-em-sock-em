@@ -529,9 +529,21 @@ els.formJoinRoom.addEventListener('submit', (e) => {
   handleJoinCode(code);
 });
 
-document.querySelectorAll('.btn-cpu').forEach((btn) => {
+document.querySelectorAll('.btn-diff').forEach((btn) => {
   btn.addEventListener('click', () => {
-    launchMatch('cpu', btn.dataset.diff || 'medium');
+    currentCpuDiff = btn.dataset.diff || 'medium';
+    document.querySelectorAll('.btn-diff').forEach((b) => b.classList.toggle('active', b === btn));
+  });
+});
+
+document.querySelectorAll('.btn-warmup-side').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const side = btn.dataset.side || 'wifebun';
+    selectedFighter = side;
+    els.fighterSelector.querySelectorAll('.fighter-btn').forEach((b) => {
+      b.classList.toggle('active', b.dataset.fighter === side);
+    });
+    launchMatch('cpu', currentCpuDiff);
   });
 });
 

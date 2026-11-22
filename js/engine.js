@@ -822,21 +822,41 @@ export class GameEngine {
 
   _drawArenaBackdrop(ctx) {
     const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#140f24');
-    bg.addColorStop(0.55, '#1e1b3a');
-    bg.addColorStop(1, '#0b0c18');
+    bg.addColorStop(0, '#240b24');
+    bg.addColorStop(0.55, '#3b1436');
+    bg.addColorStop(1, '#140717');
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
+    // Twinkling romantic stars & soft bokeh hearts in the arena sky
+    for (let i = 0; i < 24; i++) {
+      const sx = ((i * 137) % W);
+      const sy = 22 + ((i * 53) % (H * 0.36));
+      const twinkle = 0.25 + 0.55 * (0.5 + 0.5 * Math.sin(this.time * 2.4 + i));
+      ctx.fillStyle = i % 3 === 0 ? `rgba(255, 212, 121, ${twinkle})` : `rgba(255, 182, 218, ${twinkle})`;
+      ctx.beginPath();
+      ctx.arc(sx, sy, i % 4 === 0 ? 2.4 : 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    for (let i = 0; i < 6; i++) {
+      const hx = 110 + i * 150 + Math.sin(this.time * 0.7 + i) * 14;
+      const hy = ((H * 0.48 - ((this.time * 16 + i * 70) % (H * 0.5))));
+      ctx.save();
+      ctx.globalAlpha = 0.16;
+      this._drawHeart(ctx, hx, hy, 12 + (i % 3) * 4, i % 2 === 0 ? '#ff77ba' : '#ffd479');
+      ctx.restore();
+    }
+
     ctx.save();
     const sway = Math.sin(this.time * 0.8) * 35;
-    this._drawSpotlight(ctx, W * 0.24, -20, W * 0.36 + sway, H * 0.72, 'rgba(255, 105, 180, 0.13)');
-    this._drawSpotlight(ctx, W * 0.76, -20, W * 0.64 - sway, H * 0.72, 'rgba(56, 152, 255, 0.13)');
-    this._drawSpotlight(ctx, W * 0.5, -30, W * 0.5, H * 0.78, 'rgba(255, 220, 140, 0.09)');
+    this._drawSpotlight(ctx, W * 0.24, -20, W * 0.36 + sway, H * 0.72, 'rgba(255, 105, 180, 0.16)');
+    this._drawSpotlight(ctx, W * 0.76, -20, W * 0.64 - sway, H * 0.72, 'rgba(130, 170, 255, 0.14)');
+    this._drawSpotlight(ctx, W * 0.5, -30, W * 0.5, H * 0.78, 'rgba(255, 212, 121, 0.13)');
     ctx.restore();
 
     // Cute cheering bunny-ear crowd silhouettes
-    ctx.fillStyle = 'rgba(10, 10, 24, 0.75)';
+    ctx.fillStyle = 'rgba(20, 6, 22, 0.76)';
     for (let i = 0; i < 30; i++) {
       const cx = (i / 29) * W;
       const bob = Math.sin(this.time * 4 + i * 1.4) * 3;
@@ -905,10 +925,11 @@ export class GameEngine {
     ctx.stroke();
     ctx.beginPath();
     ctx.arc(0, 0, 62, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(36, 132, 255, 0.35)';
+    ctx.strokeStyle = 'rgba(255, 212, 121, 0.45)';
     ctx.lineWidth = 6;
     ctx.stroke();
     ctx.restore();
+    this._drawHeart(ctx, W * 0.5, H * 0.70, 18, 'rgba(255, 92, 168, 0.32)');
 
     // Toy sliding tracks
     ctx.fillStyle = 'rgba(15, 22, 42, 0.22)';

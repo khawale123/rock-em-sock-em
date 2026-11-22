@@ -6,7 +6,7 @@
   <title>Wifebun vs Husbun — Beatdown Sesh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <!-- PeerJS for zero-config WebRTC 1v1 multiplayer -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
@@ -14,12 +14,18 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+  <!-- Subtle floating romantic hearts backdrop -->
+  <div class="romantic-hearts" aria-hidden="true">
+    <span>♥</span><span>♥</span><span>♥</span><span>♥</span>
+    <span>♥</span><span>♥</span><span>♥</span><span>♥</span>
+  </div>
+
   <div id="app" class="app-shell">
     <!-- Top Header -->
     <header class="top-bar">
       <div class="brand" id="brand-home" title="Back to Lobby">
-        <span class="brand-badge">1v1</span>
-        <span class="brand-title">WIFEBUN <span class="accent-vs">VS</span> <span class="accent-blue">HUSBUN</span></span>
+        <span class="brand-badge">💕 1v1</span>
+        <span class="brand-title">WIFEBUN <span class="accent-vs">♥</span> <span class="accent-blue">HUSBUN</span></span>
       </div>
 
       <div class="top-controls">
@@ -44,27 +50,27 @@
     <!-- LOBBY SCREEN -->
     <main id="screen-lobby" class="screen active">
       <div class="lobby-hero">
-        <div class="hero-tag">🐰 OFFICIAL BUNNY RING SHOWDOWN 🥊</div>
-        <h1 class="hero-title"><span class="text-pink">WIFEBUN</span> VS <span class="text-blue">HUSBUN</span><br/><span class="hero-sub-title">BEATDOWN SESH</span></h1>
-        <p class="hero-subtitle">Pick your bunny, send an invite link, and settle it in the ring with custom signature moves!</p>
+        <div class="hero-tag">💕 DATE NIGHT BUNNY SHOWDOWN 💕</div>
+        <h1 class="hero-title"><span class="text-pink">WIFEBUN</span> <span class="hero-vs">vs</span> <span class="text-blue">HUSBUN</span><br/><span class="hero-sub-title">BEATDOWN SESH</span></h1>
+        <p class="hero-subtitle">A cozy little 1-on-1 ring made just for the two of us — pick your bunny and step inside to discover your secret moves.</p>
       </div>
 
-      <!-- Character Picker Bar -->
+      <!-- Character Picker Bar (moves intentionally hidden as a surprise!) -->
       <div class="fighter-picker-bar">
-        <span class="picker-label">PLAY AS:</span>
+        <span class="picker-label">♥ CHOOSE YOUR BUNNY ♥</span>
         <div class="fighter-toggle" id="fighter-selector">
           <button type="button" class="fighter-btn active" data-fighter="wifebun">
             <span class="fighter-emoji">🎀🐰</span>
             <span>
               <strong>WIFEBUN</strong>
-              <small>Pear Bounce &bull; DJ Spin &bull; Mango Seed &bull; Coke Burp</small>
+              <small>Sweet caramel bunny &bull; 4 secret signature moves</small>
             </span>
           </button>
           <button type="button" class="fighter-btn" data-fighter="husbun">
             <span class="fighter-emoji">💪🐰</span>
             <span>
               <strong>HUSBUN</strong>
-              <small>White Claw &bull; Height Mog &bull; Forehead Kiss &bull; EYP Report</small>
+              <small>Charming cocoa bunny &bull; 4 secret signature moves</small>
             </span>
           </button>
         </div>
@@ -74,7 +80,7 @@
         <!-- Primary Card: Online 1v1 -->
         <section class="card card-primary">
           <div class="card-header">
-            <span class="card-pill pill-red">ONLINE 1v1</span>
+            <span class="card-pill pill-red">💕 ONLINE 1v1</span>
             <h2>Play Together</h2>
           </div>
 
@@ -90,7 +96,7 @@
             </div>
 
             <button id="btn-create-room" class="btn btn-red btn-lg btn-full">
-              <span class="btn-icon">🥊</span> Create 1v1 Match &amp; Invite
+              <span class="btn-icon">💌</span> Create 1v1 Match &amp; Invite
             </button>
 
             <div class="divider"><span>OR JOIN WITH CODE</span></div>
@@ -118,7 +124,7 @@
               </div>
               <div class="status-pulse">
                 <span class="dot"></span>
-                <span id="waiting-status">Waiting for opponent to join...</span>
+                <span id="waiting-status">Waiting for your bunny to join...</span>
               </div>
             </div>
 
@@ -150,41 +156,45 @@
           </div>
         </section>
 
-        <!-- Secondary Card: Quick Play (CPU & Local 2P) -->
+        <!-- Secondary Card: Quick Play (Warmup & Local 2P) -->
         <section class="card card-secondary">
           <div class="card-header">
-            <span class="card-pill pill-blue">INSTANT PLAY</span>
-            <h2>Warmup &amp; Couch Duel</h2>
+            <span class="card-pill pill-blue">✨ INSTANT PLAY</span>
+            <h2>Warmup: Wifebun vs Husbun</h2>
           </div>
 
           <div class="quick-modes">
             <div class="mode-block">
               <div class="mode-info">
-                <h3>vs. CPU Bunny</h3>
-                <p>Test out all 4 signature moves against the AI bunny.</p>
+                <h3>Practice Solo (vs. CPU Bunny)</h3>
+                <p>Jump straight into Wifebun vs Husbun to preview the ring and moves.</p>
               </div>
-              <div class="difficulty-row">
-                <button class="btn btn-outline btn-cpu" data-diff="easy">Easy</button>
-                <button class="btn btn-outline btn-cpu" data-diff="medium">Medium</button>
-                <button class="btn btn-outline btn-cpu" data-diff="hard">Tough</button>
+              <div class="warmup-quick-row">
+                <button class="btn btn-red btn-sm btn-warmup-side" data-side="wifebun">🎀 Play as Wifebun</button>
+                <button class="btn btn-blue btn-sm btn-warmup-side" data-side="husbun">💪 Play as Husbun</button>
+              </div>
+              <div class="difficulty-row" id="cpu-diff-selector">
+                <button type="button" class="btn btn-outline btn-sm btn-diff" data-diff="easy">Easy CPU</button>
+                <button type="button" class="btn btn-outline btn-sm btn-diff active" data-diff="medium">Medium CPU</button>
+                <button type="button" class="btn btn-outline btn-sm btn-diff" data-diff="hard">Tough CPU</button>
               </div>
             </div>
 
             <div class="mode-block">
               <div class="mode-info">
-                <h3>Local 2-Player</h3>
+                <h3>Couch 2-Player (Same Keyboard)</h3>
                 <p>Wifebun: <kbd>A</kbd> <kbd>W</kbd> <kbd>D</kbd> <kbd>E</kbd> + <kbd>S</kbd> Guard &bull; Husbun: <kbd>J</kbd> <kbd>I</kbd> <kbd>L</kbd> <kbd>O</kbd> + <kbd>K</kbd> Guard</p>
               </div>
-              <button id="btn-local-2p" class="btn btn-dark btn-full">Start Local 2P</button>
+              <button id="btn-local-2p" class="btn btn-dark btn-full">Play Wifebun vs Husbun (Local 2P)</button>
             </div>
           </div>
 
           <div class="controls-legend">
-            <h4>HOW TO WIN</h4>
+            <h4>♥ HOW TO PLAY ♥</h4>
             <ul>
-              <li><strong>4 Signature Moves</strong> (<kbd>A</kbd> <kbd>W</kbd> <kbd>D</kbd> <kbd>E</kbd> or <kbd>1</kbd>–<kbd>4</kbd>): Mix fast hits, specials &amp; stuns!</li>
-              <li><strong>Guard</strong> (<kbd>S</kbd> or <kbd>Space</kbd>): Block incoming attacks &amp; unlock a <strong>2x COUNTER</strong> window!</li>
-              <li><strong>Pop Their Bun Head!</strong> Drain their Bun Integrity to launch their head on a spring!</li>
+              <li><strong>4 Secret Moves</strong> (<kbd>A</kbd> <kbd>W</kbd> <kbd>D</kbd> <kbd>E</kbd> or tap buttons): Revealed once you step in the ring!</li>
+              <li><strong>Guard</strong> (<kbd>S</kbd> or <kbd>Space</kbd>): Block a hit to unlock a golden <strong>2x COUNTER</strong>!</li>
+              <li><strong>Pop Their Bun Head!</strong> Drain their Bun Integrity to win the round.</li>
             </ul>
           </div>
         </section>
@@ -275,7 +285,7 @@
             <h2 id="match-winner-title">WIFEBUN WINS!</h2>
             <p id="match-winner-sub">Final Score: 2 - 0</p>
             <div class="match-actions">
-              <button id="btn-rematch" class="btn btn-red btn-lg">Rematch</button>
+              <button id="btn-rematch" class="btn btn-red btn-lg">Rematch 💕</button>
               <button id="btn-back-lobby" class="btn btn-ghost btn-lg">Back to Lobby</button>
             </div>
             <p id="rematch-status" class="hint-text hidden"></p>

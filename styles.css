@@ -1,34 +1,35 @@
 :root {
-  --bg-deep: #0b0e18;
-  --bg-surface: #141929;
-  --bg-card: #1a2136;
-  --bg-card-elev: #222b45;
-  --border: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.18);
+  --bg-deep: #150818;
+  --bg-surface: #220d26;
+  --bg-card: #28112d;
+  --bg-card-elev: #36173d;
+  --border: rgba(255, 180, 214, 0.16);
+  --border-strong: rgba(255, 180, 214, 0.28);
 
   --red: #ff5ca8;
   --red-dark: #b81d68;
-  --red-glow: rgba(255, 92, 168, 0.42);
+  --red-glow: rgba(255, 92, 168, 0.45);
 
-  --pink: #ff69b4;
+  --pink: #ff77ba;
 
-  --blue: #2484ff;
-  --blue-dark: #1050b5;
-  --blue-glow: rgba(36, 132, 255, 0.4);
+  --blue: #5c9eff;
+  --blue-dark: #255cc4;
+  --blue-glow: rgba(92, 158, 255, 0.42);
 
-  --gold: #ffca28;
-  --gold-dark: #c79100;
-  --green: #2ee59d;
+  --gold: #ffd479;
+  --gold-dark: #c98f24;
+  --green: #4ef2b1;
 
-  --text: #f4f7ff;
-  --text-muted: #98a6c7;
+  --text: #fff7fb;
+  --text-muted: #d4b4cb;
 
   --font-display: 'Bangers', Impact, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
   --font-arcade: 'Chakra Petch', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
 
-  --radius: 16px;
-  --radius-sm: 10px;
+  --radius: 20px;
+  --radius-sm: 12px;
 }
 
 * {
@@ -40,7 +41,12 @@
 
 html, body {
   height: 100%;
-  background: radial-gradient(circle at 50% -10%, #1f2b4d 0%, var(--bg-deep) 60%);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 92, 168, 0.22) 0%, transparent 45%),
+    radial-gradient(circle at 80% 5%, rgba(255, 196, 120, 0.14) 0%, transparent 42%),
+    radial-gradient(circle at 50% 100%, rgba(162, 56, 125, 0.24) 0%, transparent 55%),
+    linear-gradient(180deg, #1d0a20 0%, #130716 100%);
+  background-attachment: fixed;
   color: var(--text);
   font-family: var(--font-body);
   overflow-x: hidden;
@@ -1269,4 +1275,107 @@ kbd {
     flex-direction: row;
     padding: 10px;
   }
+}
+
+/* ROMANTIC DATE-NIGHT POLISH */
+.app-shell {
+  position: relative;
+  z-index: 1;
+}
+
+.romantic-hearts {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.romantic-hearts span {
+  position: absolute;
+  bottom: -40px;
+  color: rgba(255, 118, 184, 0.14);
+  font-size: 1.5rem;
+  animation: floatHeart 14s linear infinite;
+  user-select: none;
+}
+
+.romantic-hearts span:nth-child(1) { left: 8%;  font-size: 1.3rem; animation-duration: 13s; animation-delay: 0s; }
+.romantic-hearts span:nth-child(2) { left: 20%; font-size: 2.1rem; animation-duration: 17s; animation-delay: 2s; color: rgba(255, 212, 121, 0.12); }
+.romantic-hearts span:nth-child(3) { left: 34%; font-size: 1.4rem; animation-duration: 15s; animation-delay: 4s; }
+.romantic-hearts span:nth-child(4) { left: 48%; font-size: 1.9rem; animation-duration: 18s; animation-delay: 1s; }
+.romantic-hearts span:nth-child(5) { left: 62%; font-size: 1.5rem; animation-duration: 14s; animation-delay: 5s; color: rgba(255, 212, 121, 0.13); }
+.romantic-hearts span:nth-child(6) { left: 74%; font-size: 2.2rem; animation-duration: 19s; animation-delay: 3s; }
+.romantic-hearts span:nth-child(7) { left: 86%; font-size: 1.3rem; animation-duration: 16s; animation-delay: 6s; }
+.romantic-hearts span:nth-child(8) { left: 94%; font-size: 1.7rem; animation-duration: 15s; animation-delay: 2.5s; }
+
+@keyframes floatHeart {
+  0% { transform: translateY(0) rotate(0deg) scale(0.85); opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 0.9; }
+  100% { transform: translateY(-110vh) rotate(22deg) scale(1.15); opacity: 0; }
+}
+
+.card {
+  background: linear-gradient(180deg, rgba(46, 18, 52, 0.88) 0%, rgba(28, 11, 33, 0.92) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 182, 218, 0.18);
+  box-shadow: 0 20px 44px rgba(10, 2, 14, 0.5), inset 0 1px 0 rgba(255, 220, 238, 0.08);
+}
+
+.card-primary {
+  border-top: 3px solid var(--pink);
+}
+
+.card-secondary {
+  border-top: 3px solid var(--gold);
+}
+
+.hero-vs {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.68em;
+  color: var(--gold);
+  margin: 0 4px;
+}
+
+.hero-subtitle {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  color: #e6c6dc;
+}
+
+.hero-tag {
+  background: rgba(255, 119, 186, 0.14);
+  border-color: rgba(255, 182, 218, 0.38);
+  color: #ffd479;
+}
+
+.mode-block {
+  background: rgba(19, 7, 23, 0.62);
+  border-color: rgba(255, 182, 218, 0.14);
+}
+
+.warmup-quick-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.btn-diff.active {
+  background: rgba(255, 212, 121, 0.18);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.stage-wrap {
+  border: 2px solid rgba(255, 182, 218, 0.32);
+  box-shadow: 0 24px 56px rgba(12, 2, 16, 0.65), 0 0 40px rgba(255, 92, 168, 0.14);
+}
+
+.hud-fighter {
+  background: rgba(40, 17, 45, 0.9);
+  border-color: rgba(255, 182, 218, 0.18);
 }
