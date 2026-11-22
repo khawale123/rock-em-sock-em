@@ -1,4 +1,4 @@
-// Synthesized retro toy-arcade sound engine using Web Audio API
+// Synthesized arcade sound engine with custom sounds for Wifebun & Husbun moves
 
 class SoundEngine {
   constructor() {
@@ -29,6 +29,159 @@ class SoundEngine {
     return Boolean(this.ctx);
   }
 
+  playMove(moveId) {
+    if (!this._canPlay()) return;
+    const now = this.ctx.currentTime;
+
+    switch (moveId) {
+      case 'pear_bounce': {
+        // Bouncy boing!
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(190, now);
+        osc.frequency.exponentialRampToValueAtTime(520, now + 0.12);
+        osc.frequency.exponentialRampToValueAtTime(280, now + 0.22);
+        gain.gain.setValueAtTime(0.22, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.25);
+        break;
+      }
+
+      case 'dj_spin': {
+        // Vinyl scratch wikka-wikka!
+        [0, 0.08].forEach((offset, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(idx === 0 ? 320 : 620, now + offset);
+          osc.frequency.exponentialRampToValueAtTime(idx === 0 ? 780 : 240, now + offset + 0.075);
+          gain.gain.setValueAtTime(0.14, now + offset);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.08);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + offset);
+          osc.stop(now + offset + 0.085);
+        });
+        break;
+      }
+
+      case 'mango_seed': {
+        // High-speed zip launch!
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(760, now);
+        osc.frequency.exponentialRampToValueAtTime(180, now + 0.18);
+        gain.gain.setValueAtTime(0.22, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.19);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.2);
+        break;
+      }
+
+      case 'coke_burp': {
+        // Fizzy soda hiss + bubbly burp!
+        this._noiseBurst(0.16, 0.16, 3600);
+        const osc = this.ctx.createOscillator();
+        const lfo = this.ctx.createOscillator();
+        const lfoGain = this.ctx.createGain();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(125, now + 0.04);
+        osc.frequency.exponentialRampToValueAtTime(72, now + 0.34);
+        lfo.frequency.setValueAtTime(28, now + 0.04);
+        lfoGain.gain.setValueAtTime(24, now + 0.04);
+        lfo.connect(lfoGain);
+        lfoGain.connect(osc.frequency);
+        gain.gain.setValueAtTime(0.22, now + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + 0.04);
+        lfo.start(now + 0.04);
+        osc.stop(now + 0.38);
+        lfo.stop(now + 0.38);
+        break;
+      }
+
+      case 'white_claw': {
+        // Crisp can crack PSSH! + ice chime
+        this._noiseBurst(0.14, 0.22, 4800);
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1040, now + 0.02);
+        osc.frequency.exponentialRampToValueAtTime(620, now + 0.14);
+        gain.gain.setValueAtTime(0.14, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + 0.02);
+        osc.stop(now + 0.16);
+        break;
+      }
+
+      case 'height_mog': {
+        // Dramatic towering bass rise!
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(95, now);
+        osc.frequency.exponentialRampToValueAtTime(220, now + 0.22);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.25);
+        break;
+      }
+
+      case 'forehead_kiss': {
+        // Cute playful mwah pop!
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(420, now);
+        osc.frequency.exponentialRampToValueAtTime(920, now + 0.08);
+        osc.frequency.exponentialRampToValueAtTime(580, now + 0.16);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.19);
+        break;
+      }
+
+      case 'eyp_report': {
+        // Crisp paper slap + heavy stamp thud!
+        this._noiseBurst(0.08, 0.24, 2000);
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(160, now + 0.06);
+        osc.frequency.exponentialRampToValueAtTime(50, now + 0.22);
+        gain.gain.setValueAtTime(0.25, now + 0.06);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.23);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + 0.06);
+        osc.stop(now + 0.24);
+        break;
+      }
+
+      default:
+        this.playWhoosh(1);
+    }
+  }
+
   playWhoosh(pitch = 1) {
     if (!this._canPlay()) return;
     const now = this.ctx.currentTime;
@@ -51,14 +204,13 @@ class SoundEngine {
     if (!this._canPlay()) return;
     const now = this.ctx.currentTime;
 
-    // Plastic toy clack + punchy low thud
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = heavy ? 'sawtooth' : 'square';
     osc.frequency.setValueAtTime(heavy ? 190 : 150, now);
     osc.frequency.exponentialRampToValueAtTime(42, now + (heavy ? 0.16 : 0.1));
 
-    gain.gain.setValueAtTime(heavy ? 0.32 : 0.22, now);
+    gain.gain.setValueAtTime(heavy ? 0.3 : 0.2, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + (heavy ? 0.18 : 0.11));
 
     osc.connect(gain);
@@ -66,8 +218,7 @@ class SoundEngine {
     osc.start(now);
     osc.stop(now + (heavy ? 0.19 : 0.12));
 
-    // Noise snap
-    this._noiseBurst(heavy ? 0.1 : 0.06, heavy ? 0.25 : 0.15, heavy ? 1400 : 2200);
+    this._noiseBurst(heavy ? 0.1 : 0.06, heavy ? 0.24 : 0.14, heavy ? 1400 : 2200);
   }
 
   playBlock() {
@@ -92,7 +243,6 @@ class SoundEngine {
     if (!this._canPlay()) return;
     const now = this.ctx.currentTime;
 
-    // Classic metallic spring BOING!
     const osc = this.ctx.createOscillator();
     const lfo = this.ctx.createOscillator();
     const lfoGain = this.ctx.createGain();
@@ -119,7 +269,6 @@ class SoundEngine {
     osc.stop(now + 0.64);
     lfo.stop(now + 0.64);
 
-    // Big impact crunch
     this._noiseBurst(0.16, 0.3, 900);
   }
 

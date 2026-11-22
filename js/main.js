@@ -2,7 +2,7 @@ import { sound } from './audio.js';
 import { getGoogleClientId } from './config.js';
 import { AuthManager } from './auth.js';
 import { NetworkManager } from './network.js';
-import { GameEngine } from './engine.js';
+import { GameEngine, FIGHTER_MOVES } from './engine.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -19,6 +19,7 @@ const els = {
   screenLobby: $('screen-lobby'),
   screenGame: $('screen-game'),
 
+  fighterSelector: $('fighter-selector'),
   roundsSelector: $('rounds-selector'),
   onlineIdle: $('online-idle'),
   onlineWaiting: $('online-waiting'),
@@ -93,6 +94,9 @@ const els = {
 };
 
 let selectedBestOf = 3;
+let selectedFighter = 'wifebun'; // 'wifebun' ('red') | 'husbun' ('blue')
+let mySide = 'red'; // 'red' (Wifebun) | 'blue' (Husbun)
+let hostSide = 'red';
 let currentMode = 'cpu'; // 'cpu' | 'local' | 'online-host' | 'online-guest'
 let currentCpuDiff = 'medium';
 let opponentProfile = { name: 'Opponent', email: '', picture: '' };
@@ -107,7 +111,7 @@ function showToast(msg, duration = 2600) {
   toastTimer = setTimeout(() => els.toast.classList.add('hidden'), duration);
 }
 
-function renderAvatar(el, profile, fallbackLetter) {
+function renderAvatar(el, profile, fallbackEmoji) {
   el.innerHTML = '';
   if (profile && profile.picture) {
     const img = document.createElement('img');
@@ -116,9 +120,19 @@ function renderAvatar(el, profile, fallbackLetter) {
     img.referrerPolicy = 'no-referrer';
     el.appendChild(img);
   } else {
-    const letter = ((profile && profile.name) || fallbackLetter || 'P').trim().charAt(0).toUpperCase();
-    el.textContent = letter;
+    el.textContent = fallbackEmoji || '🐰';
   }
+}
+
+function updateMoveDeckForSide(side) {
+  const moves = FIGHTER_MOVES[side] || FIGHTER_MOVES.red;
+  moves.forEach((m, idx) => {
+    const emojiEl = $(`move${idx}-emoji`);
+    const labelEl = $(`move${idx}-label`);
+    if (emojiEl) emojiEl.textContent = m.emoji;
+    if (labelEl) labelEl.textContent = m.label;
+  });
+  els.controlsP1.classList.toggle('theme-blue', side === 'blue');
 }
 
 // ==========================
@@ -129,7 +143,7 @@ const auth = new AuthManager((profile) => {
 });
 
 function syncProfileUI(profile) {
-  renderAvatar(els.userAvatar, profile, 'P');
+  renderAvatar(els.userAvatar, profile, '🐰');
   els.userName.textContent = profile.name || 'Player';
   els.userSub.textContent = profile.isGoogle
     ? 'Google Account'
@@ -200,11 +214,11 @@ const engine = new GameEngine(els.canvas, {
     els.rematchStatus.classList.add('hidden');
     els.btnRematch.disabled = false;
 
-    const winnerName = winner === 'red' ? els.hudRedName.textContent : els.hudBlueName.textContent;
-    els.matchResultBadge.textContent = 'KNOCKED THEIR BLOCK OFF!';
+    const winnerName = winner === 'red' ? 'WIFEBUN' : 'HUSBUN';
+    els.matchResultBadge.textContent = 'BEATDOWN SESH COMPLETE!';
     els.matchWinnerTitle.textContent = `${winnerName} WINS!`;
-    els.matchWinnerTitle.style.color = winner === 'red' ? 'var(--red)' : 'var(--blue)';
-    els.matchWinnerSub.textContent = `Final Score: ${redWins} - ${blueWins}`;
+    els.matchWinnerTitle.style.color = winner === 'red' ? 'var(--pink)' : 'var(--blue)';
+    els.matchWinnerSub.textContent = `Final Score: Wifebun ${redWins} - ${blueWins} Husbun`;
     els.matchOverlay.classList.remove('hidden');
   },
 });
@@ -229,9 +243,9 @@ function renderRoundPips(container, total, won, wonClass) {
 const net = new NetworkManager({
   onConnect: (role) => {
     if (role === 'host') {
-      els.waitingStatus.textContent = 'Opponent connected! Starting match...';
+      els.waitingStatus.textContent = 'Opponent connected! Starting beatdown sesh...';
     } else {
-      els.joiningStatus.textContent = 'Connected! Entering the ring...';
+      els.joiningStatus.textContent = 'Connected! Hopping into the ring...';
     }
   },
 
@@ -244,8 +258,13 @@ const net = new NetworkManager({
       case 'hello':
         opponentProfile = msg.profile || { name: 'Opponent', email: '', picture: '' };
         if (net.role === 'host') {
-          // Host launches the match for both players
-          net.send({ type: 'start', bestOf: selectedBestOf, hostProfile: auth.getProfile() });
+          hostSide = selectedFighter === 'husbun' ? 'blue' : 'red';
+          net.send({
+            type: 'start',
+            bestOf: selectedBestOf,
+            hostSide,
+            hostProfile: auth.getProfile(),
+          });
           launchMatch('online-host');
         }
         break;
@@ -253,15 +272,17 @@ const net = new NetworkManager({
       case 'start':
         if (msg.hostProfile) opponentProfile = msg.hostProfile;
         selectedBestOf = msg.bestOf || 3;
+        hostSide = msg.hostSide || 'red';
         launchMatch('online-guest');
         break;
 
       case 'input':
         if (currentMode === 'online-host') {
-          if (msg.action === 'left' || msg.action === 'right') {
-            engine.triggerPunch('blue', msg.action);
+          const guestSide = hostSide === 'red' ? 'blue' : 'red';
+          if (typeof msg.moveIndex === 'number') {
+            engine.triggerMove(guestSide, msg.moveIndex);
           } else if (msg.action === 'block') {
-            engine.setBlock('blue', msg.active);
+            engine.setBlock(guestSide, msg.active);
           }
         }
         break;
@@ -281,7 +302,12 @@ const net = new NetworkManager({
       case 'rematch':
         oppRematchReady = true;
         if (myRematchReady && currentMode === 'online-host') {
-          net.send({ type: 'start', bestOf: selectedBestOf, hostProfile: auth.getProfile() });
+          net.send({
+            type: 'start',
+            bestOf: selectedBestOf,
+            hostSide,
+            hostProfile: auth.getProfile(),
+          });
           launchMatch('online-host');
         } else {
           els.rematchStatus.textContent = `${opponentProfile.name} wants a rematch! Click Rematch to go again.`;
@@ -293,7 +319,7 @@ const net = new NetworkManager({
 
   onDisconnect: () => {
     if (currentMode === 'online-host' || currentMode === 'online-guest') {
-      showToast('Opponent disconnected from the match.', 3500);
+      showToast('Opponent left the ring.', 3500);
       returnToLobby();
     }
   },
@@ -323,35 +349,54 @@ function launchMatch(mode, cpuDiff = currentCpuDiff) {
   let redProfile, blueProfile;
 
   if (mode === 'cpu') {
-    redProfile = me;
-    blueProfile = { name: `CPU (${cpuDiff.toUpperCase()})`, picture: '' };
+    mySide = selectedFighter === 'husbun' ? 'blue' : 'red';
+    if (mySide === 'red') {
+      redProfile = { name: `WIFEBUN`, picture: me.picture };
+      blueProfile = { name: `HUSBUN (CPU)`, picture: '' };
+    } else {
+      redProfile = { name: `WIFEBUN (CPU)`, picture: '' };
+      blueProfile = { name: `HUSBUN`, picture: me.picture };
+    }
   } else if (mode === 'local') {
-    redProfile = { name: me.name || 'RED ROCKER', picture: me.picture };
-    blueProfile = { name: 'BLUE BOMBER', picture: '' };
+    mySide = 'red';
+    redProfile = { name: 'WIFEBUN', picture: '' };
+    blueProfile = { name: 'HUSBUN', picture: '' };
   } else if (mode === 'online-host') {
-    redProfile = me;
-    blueProfile = opponentProfile;
+    mySide = hostSide;
+    if (hostSide === 'red') {
+      redProfile = { name: `WIFEBUN (${me.name})`, picture: me.picture };
+      blueProfile = { name: `HUSBUN (${opponentProfile.name})`, picture: opponentProfile.picture };
+    } else {
+      redProfile = { name: `WIFEBUN (${opponentProfile.name})`, picture: opponentProfile.picture };
+      blueProfile = { name: `HUSBUN (${me.name})`, picture: me.picture };
+    }
   } else {
-    redProfile = opponentProfile;
-    blueProfile = me;
+    mySide = hostSide === 'red' ? 'blue' : 'red';
+    if (mySide === 'red') {
+      redProfile = { name: `WIFEBUN (${me.name})`, picture: me.picture };
+      blueProfile = { name: `HUSBUN (${opponentProfile.name})`, picture: opponentProfile.picture };
+    } else {
+      redProfile = { name: `WIFEBUN (${opponentProfile.name})`, picture: opponentProfile.picture };
+      blueProfile = { name: `HUSBUN (${me.name})`, picture: me.picture };
+    }
   }
 
-  renderAvatar(els.hudRedAvatar, redProfile, 'R');
-  els.hudRedName.textContent = redProfile.name || 'RED ROCKER';
-  renderAvatar(els.hudBlueAvatar, blueProfile, 'B');
-  els.hudBlueName.textContent = blueProfile.name || 'BLUE BOMBER';
+  renderAvatar(els.hudRedAvatar, redProfile, '🎀');
+  els.hudRedName.textContent = redProfile.name;
+  renderAvatar(els.hudBlueAvatar, blueProfile, '💪');
+  els.hudBlueName.textContent = blueProfile.name;
 
-  // "YOU" badges & control pod theme
-  els.hudRedTag.classList.toggle('hidden', mode === 'online-guest' || mode === 'local');
-  els.hudBlueTag.classList.toggle('hidden', mode !== 'online-guest');
+  els.hudRedTag.classList.toggle('hidden', mode === 'local' || mySide !== 'red');
+  els.hudBlueTag.classList.toggle('hidden', mode === 'local' || mySide !== 'blue');
   els.hudNetBadge.classList.toggle('hidden', !(mode === 'online-host' || mode === 'online-guest'));
-  els.controlsP1.classList.toggle('theme-blue', mode === 'online-guest');
+
+  updateMoveDeckForSide(mySide);
 
   els.matchOverlay.classList.add('hidden');
   els.screenLobby.classList.remove('active');
   els.screenGame.classList.add('active');
 
-  engine.startMatch({ mode, bestOf: selectedBestOf, cpuDifficulty: cpuDiff });
+  engine.startMatch({ mode, bestOf: selectedBestOf, cpuDifficulty: cpuDiff, humanSide: mySide });
 }
 
 function returnToLobby() {
@@ -362,7 +407,6 @@ function returnToLobby() {
   els.screenLobby.classList.add('active');
   engine.phase = 'idle';
 
-  // Clean ?room= from URL so refresh doesn't auto-rejoin old room
   const url = new URL(window.location.href);
   if (url.searchParams.has('room')) {
     url.searchParams.delete('room');
@@ -373,6 +417,13 @@ function returnToLobby() {
 // ==========================
 // LOBBY EVENTS
 // ==========================
+els.fighterSelector.addEventListener('click', (e) => {
+  const btn = e.target.closest('.fighter-btn');
+  if (!btn) return;
+  selectedFighter = btn.dataset.fighter || 'wifebun';
+  els.fighterSelector.querySelectorAll('.fighter-btn').forEach((b) => b.classList.toggle('active', b === btn));
+});
+
 els.roundsSelector.addEventListener('click', (e) => {
   const btn = e.target.closest('.seg-btn');
   if (!btn) return;
@@ -388,7 +439,7 @@ els.btnCreateRoom.addEventListener('click', async () => {
     const code = await net.hostRoom(auth.getProfile());
     els.displayRoomCode.textContent = code;
     els.inputInviteLink.value = auth.buildInviteUrl(code);
-    els.waitingStatus.textContent = 'Waiting for opponent to join...';
+    els.waitingStatus.textContent = 'Waiting for your partner to join...';
     setOnlinePanel('waiting');
   } catch (err) {
     showToast(err.message || 'Could not create match.', 3500);
@@ -403,7 +454,7 @@ async function copyInviteLink() {
   const link = auth.buildInviteUrl(net.roomCode);
   try {
     await navigator.clipboard.writeText(link);
-    showToast('Invite link copied! Paste it anywhere to invite a friend.');
+    showToast('Invite link copied! Send it to start the beatdown sesh.');
   } catch (_) {
     els.inputInviteLink.select();
     window.prompt('Copy this invite link:', link);
@@ -419,12 +470,12 @@ els.inputInviteLink.addEventListener('click', () => {
 els.btnShareNative.addEventListener('click', async () => {
   if (!net.roomCode) return;
   const link = auth.buildInviteUrl(net.roomCode);
-  const text = `🥊 Fight me 1v1 in Rock 'Em Sock 'Em! Click to join my match: ${link}`;
+  const text = `🐰🥊 Join me in Wifebun vs Husbun Beatdown Sesh! Click to fight: ${link}`;
   if (navigator.share) {
     try {
       await navigator.share({
-        title: "Rock 'Em Sock 'Em 1v1 Invite",
-        text: "🥊 Fight me 1v1 in Rock 'Em Sock 'Em!",
+        title: 'Wifebun vs Husbun — Beatdown Sesh',
+        text: '🐰🥊 Join me in Wifebun vs Husbun Beatdown Sesh!',
         url: link,
       });
       return;
@@ -508,7 +559,12 @@ els.btnRematch.addEventListener('click', () => {
   net.send({ type: 'rematch' });
 
   if (oppRematchReady && currentMode === 'online-host') {
-    net.send({ type: 'start', bestOf: selectedBestOf, hostProfile: auth.getProfile() });
+    net.send({
+      type: 'start',
+      bestOf: selectedBestOf,
+      hostSide,
+      hostProfile: auth.getProfile(),
+    });
     launchMatch('online-host');
   } else {
     els.rematchStatus.textContent = `Waiting for ${opponentProfile.name} to accept rematch...`;
@@ -557,22 +613,29 @@ els.btnSound.addEventListener('click', () => {
 });
 
 // ==========================
-// GAME CONTROLS (KEYBOARD + TOUCH/MOUSE)
+// GAME CONTROLS (4 UNIQUE MOVES + GUARD)
 // ==========================
 function sendPlayerAction(action, active = true) {
   if (!els.screenGame.classList.contains('active')) return;
   sound.init();
 
+  const moveMatch = /^move([0-3])$/.exec(action);
+
   if (currentMode === 'online-guest') {
-    net.send({ type: 'input', action, active });
+    if (moveMatch) {
+      net.send({ type: 'input', moveIndex: Number(moveMatch[1]) });
+    } else if (action === 'block') {
+      net.send({ type: 'input', action: 'block', active });
+    }
     return;
   }
 
-  // Host, CPU, or P1 in Local
-  if (action === 'left' || action === 'right') {
-    engine.triggerPunch('red', action);
+  // Host, CPU, or P1 (Wifebun) in Local 2P
+  const side = currentMode === 'local' ? 'red' : mySide;
+  if (moveMatch) {
+    engine.triggerMove(side, Number(moveMatch[1]));
   } else if (action === 'block') {
-    engine.setBlock('red', active);
+    engine.setBlock(side, active);
   }
 }
 
@@ -583,32 +646,42 @@ window.addEventListener('keydown', (e) => {
 
   const key = e.key.toLowerCase();
 
-  // P1 / Online Player controls
-  if (key === 'a' || (currentMode !== 'local' && key === 'arrowleft')) {
-    sendPlayerAction('left');
-    flashArcadeBtn('left', true);
-  } else if (key === 'd' || (currentMode !== 'local' && key === 'arrowright')) {
-    sendPlayerAction('right');
-    flashArcadeBtn('right', true);
-  } else if (key === 's' || key === ' ' || (currentMode !== 'local' && key === 'arrowdown')) {
+  // Primary player controls (A/W/D/E or 1/2/3/4 + S/Space for Guard)
+  if (key === 'a' || key === '1') {
+    sendPlayerAction('move0');
+    flashArcadeBtn('move0', true);
+  } else if (key === 'w' || key === '2') {
+    sendPlayerAction('move1');
+    flashArcadeBtn('move1', true);
+  } else if (key === 'd' || key === '3') {
+    sendPlayerAction('move2');
+    flashArcadeBtn('move2', true);
+  } else if (key === 'e' || key === '4') {
+    sendPlayerAction('move3');
+    flashArcadeBtn('move3', true);
+  } else if (key === 's' || key === ' ') {
     e.preventDefault();
     sendPlayerAction('block', true);
     flashArcadeBtn('block', true);
   }
 
-  // Local 2P second player (Blue Bomber: J / K / L)
+  // Local 2P second player (Husbun: J / I / L / O + K Guard)
   if (currentMode === 'local') {
-    if (key === 'j') engine.triggerPunch('blue', 'left');
-    else if (key === 'l') engine.triggerPunch('blue', 'right');
+    if (key === 'j') engine.triggerMove('blue', 0);
+    else if (key === 'i') engine.triggerMove('blue', 1);
+    else if (key === 'l') engine.triggerMove('blue', 2);
+    else if (key === 'o') engine.triggerMove('blue', 3);
     else if (key === 'k') engine.setBlock('blue', true);
   }
 });
 
 window.addEventListener('keyup', (e) => {
   const key = e.key.toLowerCase();
-  if (key === 'a' || key === 'arrowleft') flashArcadeBtn('left', false);
-  if (key === 'd' || key === 'arrowright') flashArcadeBtn('right', false);
-  if (key === 's' || key === ' ' || key === 'arrowdown') {
+  if (key === 'a' || key === '1') flashArcadeBtn('move0', false);
+  if (key === 'w' || key === '2') flashArcadeBtn('move1', false);
+  if (key === 'd' || key === '3') flashArcadeBtn('move2', false);
+  if (key === 'e' || key === '4') flashArcadeBtn('move3', false);
+  if (key === 's' || key === ' ') {
     sendPlayerAction('block', false);
     flashArcadeBtn('block', false);
   }
@@ -656,7 +729,6 @@ function tick(now) {
     engine.update(dt);
     engine.render();
 
-    // Host streams authoritative state at ~30Hz
     if (currentMode === 'online-host' && net.isConnected() && now - lastNetSync >= 33) {
       lastNetSync = now;
       net.send({ type: 'state', state: engine.exportState() });
@@ -675,7 +747,6 @@ const urlParams = new URLSearchParams(window.location.search);
 const inviteRoom = urlParams.get('room');
 if (inviteRoom) {
   els.inputRoomCode.value = inviteRoom.toUpperCase();
-  // Slight delay so PeerJS script finishes loading
   window.addEventListener('load', () => {
     setTimeout(() => handleJoinCode(inviteRoom), 300);
   });

@@ -122,19 +122,19 @@ export class AuthManager {
 
   buildGmailInviteUrl(friendEmail, roomCode) {
     const inviteUrl = this.buildInviteUrl(roomCode);
-    const sender = this.profile.name || 'Your friend';
-    const subject = `🥊 ${sender} challenged you to Rock 'Em Sock 'Em 1v1!`;
+    const sender = this.profile.name || 'Your bunny';
+    const subject = `🐰🥊 ${sender} invited you to Wifebun vs Husbun Beatdown Sesh!`;
     const body = [
       `Hey!`,
       ``,
-      `${sender} wants to settle it in the ring — 1-on-1 Rock 'Em Sock 'Em Robots!`,
+      `${sender} wants to throw paws in Wifebun vs Husbun Beatdown Sesh!`,
       ``,
-      `Click here to jump straight into the match:`,
+      `Click here to jump straight into the ring:`,
       inviteUrl,
       ``,
       `Or enter Match Code: ${roomCode}`,
       ``,
-      `Get ready to knock their block off!`,
+      `Let's settle this! 🐰🥊`,
     ].join('\n');
 
     const params = new URLSearchParams({

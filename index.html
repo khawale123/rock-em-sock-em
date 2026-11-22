@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>ROCK 'EM SOCK 'EM — 1v1 Arena</title>
+  <title>Wifebun vs Husbun — Beatdown Sesh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -19,12 +19,12 @@
     <header class="top-bar">
       <div class="brand" id="brand-home" title="Back to Lobby">
         <span class="brand-badge">1v1</span>
-        <span class="brand-title">ROCK 'EM <span class="accent-blue">SOCK 'EM</span></span>
+        <span class="brand-title">WIFEBUN <span class="accent-vs">VS</span> <span class="accent-blue">HUSBUN</span></span>
       </div>
 
       <div class="top-controls">
         <div id="user-pill" class="user-pill">
-          <div id="user-avatar" class="avatar">P1</div>
+          <div id="user-avatar" class="avatar">🐰</div>
           <div class="user-meta">
             <span id="user-name" class="user-name">Player</span>
             <span id="user-sub" class="user-sub">Guest</span>
@@ -44,9 +44,30 @@
     <!-- LOBBY SCREEN -->
     <main id="screen-lobby" class="screen active">
       <div class="lobby-hero">
-        <div class="hero-tag">ARCADE TABLETOP DUEL</div>
-        <h1 class="hero-title">KNOCK THEIR <span class="text-red">BLOCK</span> <span class="text-blue">OFF!</span></h1>
-        <p class="hero-subtitle">Challenge a friend over Gmail or a room link for live 1-on-1 robot boxing, or warm up against the CPU.</p>
+        <div class="hero-tag">🐰 OFFICIAL BUNNY RING SHOWDOWN 🥊</div>
+        <h1 class="hero-title"><span class="text-pink">WIFEBUN</span> VS <span class="text-blue">HUSBUN</span><br/><span class="hero-sub-title">BEATDOWN SESH</span></h1>
+        <p class="hero-subtitle">Pick your bunny, send an invite link, and settle it in the ring with custom signature moves!</p>
+      </div>
+
+      <!-- Character Picker Bar -->
+      <div class="fighter-picker-bar">
+        <span class="picker-label">PLAY AS:</span>
+        <div class="fighter-toggle" id="fighter-selector">
+          <button type="button" class="fighter-btn active" data-fighter="wifebun">
+            <span class="fighter-emoji">🎀🐰</span>
+            <span>
+              <strong>WIFEBUN</strong>
+              <small>Pear Bounce &bull; DJ Spin &bull; Mango Seed &bull; Coke Burp</small>
+            </span>
+          </button>
+          <button type="button" class="fighter-btn" data-fighter="husbun">
+            <span class="fighter-emoji">💪🐰</span>
+            <span>
+              <strong>HUSBUN</strong>
+              <small>White Claw &bull; Height Mog &bull; Forehead Kiss &bull; EYP Report</small>
+            </span>
+          </button>
+        </div>
       </div>
 
       <div class="lobby-grid">
@@ -54,13 +75,13 @@
         <section class="card card-primary">
           <div class="card-header">
             <span class="card-pill pill-red">ONLINE 1v1</span>
-            <h2>Play a Google Friend</h2>
+            <h2>Play Together</h2>
           </div>
 
           <!-- Initial Online Actions -->
           <div id="online-idle" class="online-panel">
             <div class="rounds-row">
-              <label for="select-rounds">Match Format</label>
+              <label for="rounds-selector">Match Format</label>
               <div class="segmented" id="rounds-selector">
                 <button type="button" class="seg-btn" data-rounds="1">1 Round</button>
                 <button type="button" class="seg-btn active" data-rounds="3">Best of 3</button>
@@ -103,15 +124,15 @@
 
             <!-- Send Invite to Google User -->
             <div class="invite-box">
-              <label for="input-friend-email">Invite a Google User via Gmail</label>
+              <label for="input-friend-email">Invite via Gmail</label>
               <div class="invite-row">
-                <input id="input-friend-email" type="email" placeholder="friend@gmail.com" autocomplete="email" />
+                <input id="input-friend-email" type="email" placeholder="babe@gmail.com" autocomplete="email" />
                 <button id="btn-send-gmail" class="btn btn-gmail" type="button">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
                   Gmail Invite
                 </button>
               </div>
-              <p class="hint-text">Opens Gmail with a pre-filled 1-click match link. Works on any browser!</p>
+              <p class="hint-text">Opens Gmail with a pre-filled 1-click match link. Your partner automatically gets the other bunny!</p>
             </div>
 
             <button id="btn-cancel-room" class="btn btn-ghost btn-full">Cancel Match</button>
@@ -133,14 +154,14 @@
         <section class="card card-secondary">
           <div class="card-header">
             <span class="card-pill pill-blue">INSTANT PLAY</span>
-            <h2>Solo &amp; Couch Duel</h2>
+            <h2>Warmup &amp; Couch Duel</h2>
           </div>
 
           <div class="quick-modes">
             <div class="mode-block">
               <div class="mode-info">
-                <h3>vs. CPU Bot</h3>
-                <p>Practice your timing, blocks, and chin-popping counters.</p>
+                <h3>vs. CPU Bunny</h3>
+                <p>Test out all 4 signature moves against the AI bunny.</p>
               </div>
               <div class="difficulty-row">
                 <button class="btn btn-outline btn-cpu" data-diff="easy">Easy</button>
@@ -152,7 +173,7 @@
             <div class="mode-block">
               <div class="mode-info">
                 <h3>Local 2-Player</h3>
-                <p>Same keyboard: Red uses <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> &bull; Blue uses <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd></p>
+                <p>Wifebun: <kbd>A</kbd> <kbd>W</kbd> <kbd>D</kbd> <kbd>E</kbd> + <kbd>S</kbd> Guard &bull; Husbun: <kbd>J</kbd> <kbd>I</kbd> <kbd>L</kbd> <kbd>O</kbd> + <kbd>K</kbd> Guard</p>
               </div>
               <button id="btn-local-2p" class="btn btn-dark btn-full">Start Local 2P</button>
             </div>
@@ -161,9 +182,9 @@
           <div class="controls-legend">
             <h4>HOW TO WIN</h4>
             <ul>
-              <li><strong>Left / Right Punch</strong> (<kbd>A</kbd> / <kbd>D</kbd>): Snap quick jabs &amp; hooks.</li>
-              <li><strong>Block</strong> (<kbd>S</kbd> or <kbd>Space</kbd>): Absorb hits &amp; unlock a <strong>2x COUNTER</strong> window!</li>
-              <li><strong>Pop Their Head!</strong> Drain their Chin Integrity to launch their head off on a spring.</li>
+              <li><strong>4 Signature Moves</strong> (<kbd>A</kbd> <kbd>W</kbd> <kbd>D</kbd> <kbd>E</kbd> or <kbd>1</kbd>–<kbd>4</kbd>): Mix fast hits, specials &amp; stuns!</li>
+              <li><strong>Guard</strong> (<kbd>S</kbd> or <kbd>Space</kbd>): Block incoming attacks &amp; unlock a <strong>2x COUNTER</strong> window!</li>
+              <li><strong>Pop Their Bun Head!</strong> Drain their Bun Integrity to launch their head on a spring!</li>
             </ul>
           </div>
         </section>
@@ -174,13 +195,13 @@
     <main id="screen-game" class="screen">
       <!-- HUD -->
       <div class="hud">
-        <!-- Red Player (Left) -->
+        <!-- Wifebun (Left) -->
         <div class="hud-fighter hud-red">
           <div class="hud-identity">
-            <div id="hud-red-avatar" class="avatar avatar-red">R</div>
+            <div id="hud-red-avatar" class="avatar avatar-red">🎀</div>
             <div class="hud-name-wrap">
               <div class="hud-name-row">
-                <span id="hud-red-name" class="hud-name">RED ROCKER</span>
+                <span id="hud-red-name" class="hud-name">WIFEBUN</span>
                 <span id="hud-red-tag" class="you-tag hidden">YOU</span>
               </div>
               <div id="hud-red-rounds" class="round-pips"></div>
@@ -188,7 +209,7 @@
           </div>
           <div class="bar-group">
             <div class="bar-label">
-              <span>CHIN INTEGRITY</span>
+              <span>BUN INTEGRITY</span>
               <span id="hud-red-hp-val">100%</span>
             </div>
             <div class="bar-track bar-hp">
@@ -210,22 +231,22 @@
           </div>
         </div>
 
-        <!-- Blue Player (Right) -->
+        <!-- Husbun (Right) -->
         <div class="hud-fighter hud-blue">
           <div class="hud-identity hud-identity-right">
             <div class="hud-name-wrap align-right">
               <div class="hud-name-row justify-end">
                 <span id="hud-blue-tag" class="you-tag you-tag-blue hidden">YOU</span>
-                <span id="hud-blue-name" class="hud-name">BLUE BOMBER</span>
+                <span id="hud-blue-name" class="hud-name">HUSBUN</span>
               </div>
               <div id="hud-blue-rounds" class="round-pips justify-end"></div>
             </div>
-            <div id="hud-blue-avatar" class="avatar avatar-blue">B</div>
+            <div id="hud-blue-avatar" class="avatar avatar-blue">💪</div>
           </div>
           <div class="bar-group">
             <div class="bar-label">
               <span id="hud-blue-hp-val">100%</span>
-              <span>CHIN INTEGRITY</span>
+              <span>BUN INTEGRITY</span>
             </div>
             <div class="bar-track bar-hp">
               <div id="hud-blue-hp" class="bar-fill fill-blue" style="width: 100%"></div>
@@ -241,17 +262,17 @@
       <div class="stage-wrap">
         <canvas id="game-canvas" width="960" height="540"></canvas>
 
-        <!-- Center Banner Overlay (FIGHT!, KO!, etc.) -->
+        <!-- Center Banner Overlay -->
         <div id="stage-banner" class="stage-banner hidden">
           <div id="stage-banner-main" class="banner-main">FIGHT!</div>
-          <div id="stage-banner-sub" class="banner-sub">KNOCK THEIR BLOCK OFF!</div>
+          <div id="stage-banner-sub" class="banner-sub">BEATDOWN SESH!</div>
         </div>
 
         <!-- Match Over Modal Overlay -->
         <div id="match-overlay" class="match-overlay hidden">
           <div class="match-card">
             <div id="match-result-badge" class="result-badge">KNOCKOUT!</div>
-            <h2 id="match-winner-title">RED ROCKER WINS!</h2>
+            <h2 id="match-winner-title">WIFEBUN WINS!</h2>
             <p id="match-winner-sub">Final Score: 2 - 0</p>
             <div class="match-actions">
               <button id="btn-rematch" class="btn btn-red btn-lg">Rematch</button>
@@ -262,20 +283,33 @@
         </div>
       </div>
 
-      <!-- Arcade Tactile Controls (Mobile + Mouse + Visual Key Guide) -->
+      <!-- Arcade Tactile Controls (4 Character Moves + Guard) -->
       <div class="arcade-deck">
-        <div id="controls-p1" class="control-pod">
-          <button class="arcade-btn btn-punch-left" data-action="left">
-            <span class="btn-cap">LEFT HOOK</span>
-            <kbd id="key-left">A</kbd>
+        <div id="controls-p1" class="control-pod control-pod-5">
+          <button class="arcade-btn btn-move" data-action="move0">
+            <span class="btn-emoji" id="move0-emoji">🍐</span>
+            <span class="btn-cap" id="move0-label">PEAR BOUNCE</span>
+            <kbd>A</kbd>
+          </button>
+          <button class="arcade-btn btn-move" data-action="move1">
+            <span class="btn-emoji" id="move1-emoji">🎧</span>
+            <span class="btn-cap" id="move1-label">DJ SPIN</span>
+            <kbd>W</kbd>
           </button>
           <button class="arcade-btn btn-block" data-action="block">
+            <span class="btn-emoji">🛡️</span>
             <span class="btn-cap">GUARD</span>
-            <kbd id="key-block">S</kbd>
+            <kbd>S</kbd>
           </button>
-          <button class="arcade-btn btn-punch-right" data-action="right">
-            <span class="btn-cap">RIGHT CROSS</span>
-            <kbd id="key-right">D</kbd>
+          <button class="arcade-btn btn-move" data-action="move2">
+            <span class="btn-emoji" id="move2-emoji">🥭</span>
+            <span class="btn-cap" id="move2-label">MANGO SEED</span>
+            <kbd>D</kbd>
+          </button>
+          <button class="arcade-btn btn-move" data-action="move3">
+            <span class="btn-emoji" id="move3-emoji">🥤</span>
+            <span class="btn-cap" id="move3-label">COKE BURP</span>
+            <kbd>E</kbd>
           </button>
         </div>
 
@@ -292,7 +326,6 @@
         </div>
 
         <div class="modal-body">
-          <!-- Google Sign-In Container (rendered if Client ID is set) -->
           <div id="google-signin-section" class="auth-section">
             <div id="google-btn-wrap" class="google-btn-wrap"></div>
             <div id="google-signed-in-info" class="signed-in-box hidden">
@@ -307,22 +340,20 @@
             </div>
           </div>
 
-          <!-- Display Name / Email (works immediately without OAuth setup) -->
           <form id="form-profile" class="auth-section">
             <label for="input-player-name">Display Name</label>
-            <input id="input-player-name" type="text" maxlength="20" placeholder="Your fighter name" />
+            <input id="input-player-name" type="text" maxlength="20" placeholder="Your nickname" />
 
-            <label for="input-player-email">Your Gmail (optional, shown on invites)</label>
+            <label for="input-player-email">Your Gmail (optional)</label>
             <input id="input-player-email" type="email" placeholder="you@gmail.com" />
 
             <button type="submit" class="btn btn-blue btn-full">Save Profile</button>
           </form>
 
-          <!-- Optional Google OAuth Client ID Setup -->
           <details class="oauth-setup">
             <summary>Enable Real "Sign in with Google" Button (Optional)</summary>
             <p class="hint-text">
-              Paste a Google Cloud OAuth 2.0 Web Client ID to enable live Google Sign-In with profile photos. Add your site's origin to Authorized JavaScript Origins in Google Cloud Console.
+              Paste a Google Cloud OAuth 2.0 Web Client ID to enable live Google Sign-In with profile photos.
             </p>
             <div class="invite-row">
               <input id="input-google-client-id" type="text" placeholder="123456789-xxx.apps.googleusercontent.com" />

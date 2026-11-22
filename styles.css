@@ -6,9 +6,11 @@
   --border: rgba(255, 255, 255, 0.1);
   --border-strong: rgba(255, 255, 255, 0.18);
 
-  --red: #ff334b;
-  --red-dark: #b81529;
-  --red-glow: rgba(255, 51, 75, 0.4);
+  --red: #ff5ca8;
+  --red-dark: #b81d68;
+  --red-glow: rgba(255, 92, 168, 0.42);
+
+  --pink: #ff69b4;
 
   --blue: #2484ff;
   --blue-dark: #1050b5;
@@ -1133,4 +1135,138 @@ kbd {
   border-radius: 999px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
   z-index: 200;
+}
+
+/* WIFEBUN VS HUSBUN PERSONALIZATION */
+.text-pink { color: var(--pink); }
+.accent-vs { color: var(--gold); font-size: 1.3rem; margin: 0 2px; }
+.hero-sub-title {
+  color: var(--gold);
+  font-size: clamp(1.9rem, 4.5vw, 3rem);
+  letter-spacing: 0.08em;
+}
+
+.fighter-picker-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.picker-label {
+  font-family: var(--font-arcade);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+}
+
+.fighter-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 760px;
+}
+
+@media (max-width: 640px) {
+  .fighter-toggle {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fighter-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fighter-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+}
+
+.fighter-btn[data-fighter="wifebun"].active {
+  border-color: var(--pink);
+  background: linear-gradient(135deg, rgba(255, 92, 168, 0.2), var(--bg-card));
+  box-shadow: 0 0 20px rgba(255, 92, 168, 0.25);
+}
+
+.fighter-btn[data-fighter="husbun"].active {
+  border-color: var(--blue);
+  background: linear-gradient(135deg, rgba(36, 132, 255, 0.2), var(--bg-card));
+  box-shadow: 0 0 20px rgba(36, 132, 255, 0.25);
+}
+
+.fighter-emoji {
+  font-size: 1.75rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.fighter-btn strong {
+  display: block;
+  font-family: var(--font-arcade);
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+}
+
+.fighter-btn small {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* 5-Button Move Deck */
+.control-pod-5 {
+  grid-template-columns: repeat(5, 1fr);
+  max-width: 760px;
+  gap: 10px;
+}
+
+.btn-move {
+  background: linear-gradient(180deg, #ff74b7 0%, var(--red) 100%);
+  box-shadow: 0 5px 0 var(--red-dark), 0 8px 18px var(--red-glow);
+}
+
+.control-pod.theme-blue .btn-move {
+  background: linear-gradient(180deg, #4da0ff 0%, var(--blue) 100%);
+  box-shadow: 0 5px 0 var(--blue-dark), 0 8px 18px var(--blue-glow);
+}
+
+.btn-emoji {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.control-pod-5 .btn-cap {
+  font-size: 0.76rem;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.fill-red {
+  background: linear-gradient(90deg, #ff3e9d, #ff85c0);
+}
+
+@media (max-width: 720px) {
+  .control-pod-5 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .control-pod-5 .btn-block {
+    grid-column: span 3;
+    order: 10;
+    flex-direction: row;
+    padding: 10px;
+  }
 }
