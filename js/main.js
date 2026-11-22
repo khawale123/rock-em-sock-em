@@ -50,7 +50,8 @@ const els = {
   hudRedHp: $('hud-red-hp'),
   hudRedHpTrail: $('hud-red-hp-trail'),
   hudRedHpVal: $('hud-red-hp-val'),
-  hudRedStam: $('hud-red-stam'),
+  hudRedSuper: $('hud-red-super'),
+  hudRedSuperVal: $('hud-red-super-val'),
 
   hudBlueAvatar: $('hud-blue-avatar'),
   hudBlueName: $('hud-blue-name'),
@@ -59,7 +60,8 @@ const els = {
   hudBlueHp: $('hud-blue-hp'),
   hudBlueHpTrail: $('hud-blue-hp-trail'),
   hudBlueHpVal: $('hud-blue-hp-val'),
-  hudBlueStam: $('hud-blue-stam'),
+  hudBlueSuper: $('hud-blue-super'),
+  hudBlueSuperVal: $('hud-blue-super-val'),
 
   hudRoundLabel: $('hud-round-label'),
   hudTimer: $('hud-timer'),
@@ -67,6 +69,9 @@ const els = {
   hudPing: $('hud-ping'),
 
   controlsP1: $('controls-p1'),
+  btnSuperMove: $('btn-super-move'),
+  superChargeBg: $('super-charge-bg'),
+  superBadge: $('super-badge'),
   btnExitMatch: $('btn-exit-match'),
 
   matchOverlay: $('match-overlay'),
@@ -190,15 +195,29 @@ const engine = new GameEngine(els.canvas, {
 
     const redPct = Math.max(0, Math.round(hud.red.hp));
     const bluePct = Math.max(0, Math.round(hud.blue.hp));
+    const redSuper = Math.min(100, Math.max(0, Math.round(hud.red.superMeter || 0)));
+    const blueSuper = Math.min(100, Math.max(0, Math.round(hud.blue.superMeter || 0)));
+
     els.hudRedHp.style.width = `${redPct}%`;
     els.hudRedHpTrail.style.width = `${redPct}%`;
     els.hudRedHpVal.textContent = `${redPct}%`;
-    els.hudRedStam.style.width = `${Math.round(hud.red.stamina)}%`;
+    els.hudRedSuper.style.width = `${redSuper}%`;
+    els.hudRedSuper.classList.toggle('super-max', redSuper >= 100);
+    els.hudRedSuperVal.textContent = redSuper >= 100 ? 'MAX ★' : `${redSuper}%`;
 
     els.hudBlueHp.style.width = `${bluePct}%`;
     els.hudBlueHpTrail.style.width = `${bluePct}%`;
     els.hudBlueHpVal.textContent = `${bluePct}%`;
-    els.hudBlueStam.style.width = `${Math.round(hud.blue.stamina)}%`;
+    els.hudBlueSuper.style.width = `${blueSuper}%`;
+    els.hudBlueSuper.classList.toggle('super-max', blueSuper >= 100);
+    els.hudBlueSuperVal.textContent = blueSuper >= 100 ? 'MAX ★' : `${blueSuper}%`;
+
+    // Sync active player's Special Super button fill & glow!
+    const activeSide = currentMode === 'local' ? 'red' : mySide;
+    const mySuper = activeSide === 'red' ? redSuper : blueSuper;
+    els.superChargeBg.style.width = `${mySuper}%`;
+    els.btnSuperMove.classList.toggle('ready', mySuper >= 100);
+    els.superBadge.textContent = mySuper >= 100 ? '★ READY! ★' : `SUPER ${mySuper}%`;
 
     renderRoundPips(els.hudRedRounds, hud.roundsToWin, hud.red.roundsWon, 'won-red');
     renderRoundPips(els.hudBlueRounds, hud.roundsToWin, hud.blue.roundsWon, 'won-blue');

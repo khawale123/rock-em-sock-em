@@ -273,6 +273,46 @@ class SoundEngine {
     });
   }
 
+  playSuperReady() {
+    if (!this._canPlay()) return;
+    const now = this.ctx.currentTime;
+    [659.25, 880, 1318.5].forEach((freq, idx) => {
+      const start = now + idx * 0.055;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, start);
+      gain.gain.setValueAtTime(0.14, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.28);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.3);
+    });
+  }
+
+  playSuperFreeze() {
+    if (!this._canPlay()) return;
+    const now = this.ctx.currentTime;
+    // Iconic Capcom Super-Freeze flash chime + sweeping power surge!
+    const notes = [523.25, 783.99, 1046.5, 1567.98];
+    notes.forEach((f, idx) => {
+      const start = now + idx * 0.035;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(f, start);
+      osc.frequency.exponentialRampToValueAtTime(f * 1.15, start + 0.35);
+      gain.gain.setValueAtTime(0.18, start);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.38);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.4);
+    });
+    this._noiseBurst(0.24, 0.22, 2600);
+  }
+
   playJump() {
     if (!this._canPlay()) return;
     const now = this.ctx.currentTime;

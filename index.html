@@ -51,9 +51,9 @@
     <!-- LOBBY SCREEN (Moves stay hidden as a surprise!) -->
     <main id="screen-lobby" class="screen active">
       <div class="lobby-hero">
-        <div class="hero-tag">🌸 MOONLIT DATE NIGHT FIGHTER 🌸</div>
+        <div class="hero-tag">🌸 MOONLIT ROMANCE FIGHTER 🌸</div>
         <h1 class="hero-title"><span class="text-pink">WIFEBUN</span> <span class="hero-vs">♥</span> <span class="text-blue">HUSBUN</span><br/><span class="hero-sub-title">BEATDOWN SESH</span></h1>
-        <p class="hero-subtitle">A romantic 2D side-scrolling bunny fighter made just for the two of us — step under the cherry blossoms to discover your secret moves.</p>
+        <p class="hero-subtitle">A flirty, Street-Fighter-style 1-on-1 bunny showdown made just for the two of us — charge your Romance Super with blocks &amp; time, and step under the moonlight to reveal your secret moves.</p>
       </div>
 
       <!-- Character Preview Banner (No move spoilers!) -->
@@ -62,7 +62,7 @@
           <span class="fighter-emoji">🎀🐰</span>
           <div>
             <strong>WIFEBUN</strong>
-            <small>Invited Player &bull; Sweet caramel bunny &bull; 4 secret moves</small>
+            <small>Invited Player &bull; Alluring caramel bunny &bull; 3 moves + Secret Super</small>
           </div>
         </div>
         <div class="duo-heart">♥</div>
@@ -70,7 +70,7 @@
           <span class="fighter-emoji">💪🐰</span>
           <div>
             <strong>HUSBUN</strong>
-            <small>Match Host &bull; Charming cocoa bunny &bull; 4 secret moves</small>
+            <small>Match Host &bull; Suave cocoa bunny &bull; 3 moves + Secret Super</small>
           </div>
         </div>
       </div>
@@ -164,7 +164,7 @@
             <div class="mode-block">
               <div class="mode-info">
                 <h3>Practice Solo (vs. CPU Bunny)</h3>
-                <p>Run, jump, dodge &amp; test both bunnies on the moonlit boardwalk.</p>
+                <p>Run, jump, dodge, block to charge your Super, and preview both bunnies.</p>
               </div>
               <div class="warmup-quick-row">
                 <button class="btn btn-red btn-sm btn-warmup-side" data-side="wifebun">🎀 Play as Wifebun</button>
@@ -180,18 +180,19 @@
             <div class="mode-block">
               <div class="mode-info">
                 <h3>Couch 2-Player (Same Keyboard)</h3>
-                <p>Wifebun: <kbd>A</kbd><kbd>D</kbd> Move, <kbd>W</kbd> Jump, <kbd>S</kbd> Guard, <kbd>1</kbd>–<kbd>4</kbd> Moves &bull; Husbun: <kbd>←</kbd><kbd>→</kbd> Move, <kbd>↑</kbd> Jump, <kbd>↓</kbd> Guard, <kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>U</kbd> Moves</p>
+                <p>Wifebun: <kbd>A</kbd><kbd>D</kbd> Move, <kbd>W</kbd> Jump, <kbd>S</kbd> Guard, <kbd>Q</kbd> Dodge, <kbd>1</kbd>–<kbd>4</kbd> Moves &bull; Husbun: <kbd>←</kbd><kbd>→</kbd> Move, <kbd>↑</kbd> Jump, <kbd>↓</kbd> Guard, <kbd>Shift</kbd> Dodge, <kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>U</kbd></p>
               </div>
               <button id="btn-local-2p" class="btn btn-dark btn-full">Play Wifebun vs Husbun (Local 2P)</button>
             </div>
           </div>
 
           <div class="controls-legend">
-            <h4>♥ SIDE-SCROLL FIGHTER CONTROLS ♥</h4>
+            <h4>♥ COMBAT RULES ♥</h4>
             <ul>
               <li><strong>Move &amp; Jump</strong>: <kbd>A</kbd> / <kbd>D</kbd> (or <kbd>←</kbd> <kbd>→</kbd>) to run, <kbd>W</kbd> (or <kbd>↑</kbd>) to jump.</li>
-              <li><strong>Dodge Roll &amp; Guard</strong>: <kbd>Shift</kbd> / <kbd>Space</kbd> to dodge roll (Perfect Dodge = 2x Counter!), <kbd>S</kbd> to guard.</li>
-              <li><strong>4 Secret Moves</strong>: <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>U</kbd> (or <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd> or tap buttons) — revealed in the arena!</li>
+              <li><strong>Dodge</strong> (<kbd>Space</kbd> / <kbd>Shift</kbd>): Takes <strong>0 damage</strong> with afterimages + fills Super!</li>
+              <li><strong>Guard</strong> (<kbd>S</kbd> / <kbd>↓</kbd>): Tiny chip damage &amp; <strong>rapidly charges your Special Super</strong>!</li>
+              <li><strong>Special Super</strong> (<kbd>U</kbd> / <kbd>4</kbd>): Charges over time + with every block — unleash at <strong>100%</strong>!</li>
             </ul>
           </div>
         </section>
@@ -223,8 +224,12 @@
               <div id="hud-red-hp-trail" class="bar-trail" style="width: 100%"></div>
               <div id="hud-red-hp" class="bar-fill fill-red" style="width: 100%"></div>
             </div>
-            <div class="bar-track bar-stamina">
-              <div id="hud-red-stam" class="bar-fill fill-gold" style="width: 100%"></div>
+            <div class="bar-label super-label-row">
+              <span>✨ SPECIAL SUPER</span>
+              <span id="hud-red-super-val">0%</span>
+            </div>
+            <div class="bar-track bar-super">
+              <div id="hud-red-super" class="bar-fill fill-super" style="width: 0%"></div>
             </div>
           </div>
         </div>
@@ -260,8 +265,12 @@
               <div id="hud-blue-hp-trail" class="bar-trail bar-trail-right" style="width: 100%"></div>
               <div id="hud-blue-hp" class="bar-fill fill-blue" style="width: 100%"></div>
             </div>
-            <div class="bar-track bar-stamina">
-              <div id="hud-blue-stam" class="bar-fill fill-gold" style="width: 100%"></div>
+            <div class="bar-label super-label-row">
+              <span id="hud-blue-super-val">0%</span>
+              <span>SPECIAL SUPER ✨</span>
+            </div>
+            <div class="bar-track bar-super">
+              <div id="hud-blue-super" class="bar-fill fill-super fill-super-right" style="width: 0%"></div>
             </div>
           </div>
         </div>
@@ -292,7 +301,7 @@
         </div>
       </div>
 
-      <!-- 2D Fighter Control Deck (Movement D-Pad + 4 Signature Moves) -->
+      <!-- 2D Fighter Control Deck (Movement D-Pad + 3 Moves + Special Super) -->
       <div class="fighter-deck" id="controls-p1">
         <div class="dpad-cluster">
           <button class="arcade-btn btn-nav" data-action="left" title="Move Left (A)">
@@ -307,12 +316,12 @@
             <span class="btn-emoji">▶</span>
             <kbd>D</kbd>
           </button>
-          <button class="arcade-btn btn-block" data-action="block" title="Guard (S)">
+          <button class="arcade-btn btn-block" data-action="block" title="Guard (S) — Tiny chip + charges Super!">
             <span class="btn-emoji">🛡️</span>
             <span class="btn-cap">GUARD</span>
             <kbd>S</kbd>
           </button>
-          <button class="arcade-btn btn-dodge" data-action="dodge" title="Dodge Roll (Space / Shift)">
+          <button class="arcade-btn btn-dodge" data-action="dodge" title="Dodge Roll (Space / Shift) — 0 Damage!">
             <span class="btn-emoji">✨</span>
             <span class="btn-cap">DODGE</span>
             <kbd>Space</kbd>
@@ -331,13 +340,15 @@
             <kbd>K / 2</kbd>
           </button>
           <button class="arcade-btn btn-move" data-action="move2">
-            <span class="btn-emoji" id="move2-emoji">🥭</span>
-            <span class="btn-cap" id="move2-label">MANGO SEED</span>
+            <span class="btn-emoji" id="move2-emoji">🥤</span>
+            <span class="btn-cap" id="move2-label">COKE BURP</span>
             <kbd>L / 3</kbd>
           </button>
-          <button class="arcade-btn btn-move" data-action="move3">
-            <span class="btn-emoji" id="move3-emoji">🥤</span>
-            <span class="btn-cap" id="move3-label">COKE BURP</span>
+          <button class="arcade-btn btn-super" id="btn-super-move" data-action="move3">
+            <div class="super-charge-bg" id="super-charge-bg" style="width: 0%"></div>
+            <span class="super-badge" id="super-badge">SUPER 0%</span>
+            <span class="btn-emoji" id="move3-emoji">🥭</span>
+            <span class="btn-cap" id="move3-label">MANGO SEED SPECIAL</span>
             <kbd>U / 4</kbd>
           </button>
         </div>
