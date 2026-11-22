@@ -8,8 +8,8 @@ const GRAVITY = 1780;
 
 const MAX_HP = 100;
 const MAX_SUPER = 100;
-const PASSIVE_SUPER_PER_SEC = 7.2; // Unlocks Special naturally after ~14s!
-const BLOCK_SUPER_GAIN = 22;       // Each blocked attack strongly boosts Special!
+const PASSIVE_SUPER_PER_SEC = 7.2; // Unlocks Special naturally over time (~14s)
+const BLOCK_SUPER_GAIN = 22;       // Each blocked attack strongly charges Special!
 const DODGE_SUPER_GAIN = 18;       // Perfect Dodge rewards Special!
 const HIT_SUPER_GAIN = 8;          // Normal hits build Special!
 const ROUND_TIME = 99;
@@ -20,14 +20,14 @@ export const FIGHTER_MOVES = {
       id: 'pear_bounce',
       label: 'PEAR BOUNCE',
       emoji: '🍐',
-      damage: 10,
-      cooldown: 0.45,
-      windup: 0.09,
-      active: 0.22,
-      recover: 0.16,
-      callout: 'PEAR BOUNCE!',
-      color: '#bef264',
-      heavy: false,
+      damage: 12,
+      cooldown: 0.50,
+      windup: 0.11,
+      active: 0.30,
+      recover: 0.18,
+      callout: 'PEAR BOUNCE!! 🍐',
+      color: '#ff77ba',
+      heavy: true,
       isSuper: false,
     },
     {
@@ -48,9 +48,9 @@ export const FIGHTER_MOVES = {
       id: 'coke_burp',
       label: 'COKE BURP',
       emoji: '🥤',
-      damage: 12,
+      damage: 13,
       cooldown: 0.80,
-      windup: 0.13,
+      windup: 0.15,
       active: 0.34,
       recover: 0.20,
       callout: 'COKE BURP!!',
@@ -80,7 +80,7 @@ export const FIGHTER_MOVES = {
       emoji: '🫧',
       damage: 12,
       cooldown: 0.50,
-      windup: 0.08,
+      windup: 0.09,
       active: 0.28,
       recover: 0.15,
       callout: 'WHITE CLAW!',
@@ -94,8 +94,8 @@ export const FIGHTER_MOVES = {
       emoji: '📏',
       damage: 14,
       cooldown: 0.75,
-      windup: 0.13,
-      active: 0.32,
+      windup: 0.14,
+      active: 0.34,
       recover: 0.20,
       callout: 'HEIGHT MOGGED!',
       color: '#ffd479',
@@ -109,7 +109,7 @@ export const FIGHTER_MOVES = {
       damage: 12,
       cooldown: 0.65,
       windup: 0.10,
-      active: 0.30,
+      active: 0.32,
       recover: 0.17,
       callout: 'FOREHEAD KISS ♥',
       color: '#ff7eb6',
@@ -135,7 +135,7 @@ export const FIGHTER_MOVES = {
 
 function createFighter(side, startX) {
   return {
-    side, // 'red' = Wifebun, 'blue' = Husbun
+    side, // 'red' = Wifebun (Lola style), 'blue' = Husbun (Bugs style)
     x: startX,
     y: GROUND_Y,
     vx: 0,
@@ -164,16 +164,18 @@ function createFighter(side, startX) {
     koState: false,
     koFallProgress: 0,
 
-    // Fluid animation state
+    // Cartoon stretch & pose channels
     animTime: 0,
     runCycle: 0,
     squashX: 1,
     squashY: 1,
-    stretchH: 0,
+    buttScale: 1,    // Dramatically expands during Pear Bounce!!
+    cheekPuff: 0,    // Dramatically puffs during Coke Burp!
+    stretchH: 0,     // Dramatically towers during Height Mog!
     spinAngle: 0,
     rollAngle: 0,
     earLag: 0,
-    flirtTimer: 2.2 + Math.random() * 2,
+    flirtTimer: 2.0 + Math.random() * 2,
     victoryKissTimer: 0,
 
     roundsWon: 0,
@@ -209,9 +211,7 @@ export class GameEngine {
     this.camX = STAGE_W * 0.5;
     this.camZoom = 1.0;
     this.dramaticDim = 0;
-
-    // Capcom Super-Freeze Cut-In state!
-    this.superFreeze = null; // null | { side, title, color, timer, maxTimer }
+    this.superFreeze = null;
 
     this.projectiles = [];
     this.vfx = [];
@@ -298,7 +298,6 @@ export class GameEngine {
     f.facing = facing;
     f.grounded = true;
     f.hp = MAX_HP;
-    // Keep 25% carryover Super meter between rounds like Street Fighter!
     f.superMeter = this.round > 1 ? Math.min(40, f.superMeter * 0.4) : 0;
     f.superNotified = false;
     f.blocking = false;
@@ -318,6 +317,8 @@ export class GameEngine {
     f.runCycle = 0;
     f.squashX = 1;
     f.squashY = 1;
+    f.buttScale = 1;
+    f.cheekPuff = 0;
     f.stretchH = 0;
     f.spinAngle = 0;
     f.rollAngle = 0;
@@ -332,8 +333,8 @@ export class GameEngine {
     if (!wasReady && f.superMeter >= MAX_SUPER && !f.superNotified) {
       f.superNotified = true;
       sound.playSuperReady();
-      this._spawnCallout(f.x, f.y - 148, '★ SUPER READY! ★', '#ffd479', 0.92);
-      this._spawnSparks(f.x, f.y - 72, '#ffd479', 14, 'heart');
+      this._spawnCallout(f.x, f.y - 152, '★ SUPER READY! ★', '#ffd479', 0.92);
+      this._spawnSparks(f.x, f.y - 76, '#ffd479', 14, 'heart');
     }
   }
 
@@ -342,9 +343,7 @@ export class GameEngine {
   // ==========================
   setInput(side, key, value) {
     const f = side === 'red' ? this.red : this.blue;
-    if (key in f.inputs) {
-      f.inputs[key] = Boolean(value);
-    }
+    if (key in f.inputs) f.inputs[key] = Boolean(value);
   }
 
   triggerJump(side) {
@@ -354,7 +353,7 @@ export class GameEngine {
     if (f.move && f.move.phase !== 'recover') return false;
 
     f.grounded = false;
-    f.vy = side === 'red' ? -695 : -665;
+    f.vy = side === 'red' ? -700 : -670;
     f.squashX = 0.80;
     f.squashY = 1.24;
     sound.playJump();
@@ -369,7 +368,7 @@ export class GameEngine {
 
     f.blocking = false;
     f.move = null;
-    f.dodgeTimer = 0.36;    // Generous 0-damage invincibility window!
+    f.dodgeTimer = 0.36; // 0-damage invincibility window!
     f.dodgeCooldown = 0.48;
 
     const dir = f.inputs.left ? -1 : f.inputs.right ? 1 : -f.facing;
@@ -398,22 +397,14 @@ export class GameEngine {
     const def = FIGHTER_MOVES[side]?.[moveIndex];
     if (!def) return false;
 
-    // Special Super (move 3) requires 100% Super Meter!
     if (def.isSuper) {
       if (f.superMeter < MAX_SUPER) {
-        this._spawnCallout(f.x, f.y - 135, `SUPER ${Math.floor(f.superMeter)}%`, '#ffd479', 0.72);
+        this._spawnCallout(f.x, f.y - 140, `SUPER ${Math.floor(f.superMeter)}%`, '#ffd479', 0.72);
         return false;
       }
       f.superMeter = 0;
       f.superNotified = false;
-      // Trigger dramatic Capcom Super-Freeze Cut-In!
-      this.superFreeze = {
-        side,
-        title: def.callout,
-        color: def.color,
-        timer: 0.52,
-        maxTimer: 0.52,
-      };
+      this.superFreeze = { side, title: def.callout, color: def.color, timer: 0.52, maxTimer: 0.52 };
       sound.playSuperFreeze();
       this._emitNetEvent('super_freeze', { side, title: def.callout, color: def.color });
     } else if (f.moveCooldown > 0) {
@@ -428,7 +419,7 @@ export class GameEngine {
     f.squashY = 0.82;
     if (def.id === 'forehead_kiss') f.heartEyesTimer = 1.1;
     if (def.id === 'height_mog') this.dramaticDim = 0.48;
-    if (def.id === 'dj_spin') f.winkTimer = 0.65;
+    if (def.id === 'pear_bounce' || def.id === 'dj_spin') f.winkTimer = 0.75;
 
     f.move = {
       index: moveIndex,
@@ -447,9 +438,7 @@ export class GameEngine {
     };
     f.moveCooldown = def.cooldown || 0;
 
-    if (!def.isSuper) {
-      sound.playMove(def.id);
-    }
+    if (!def.isSuper) sound.playMove(def.id);
     this._emitNetEvent('move_start', { side, moveId: def.id, x: f.x, y: f.y, dir: f.facing });
     return true;
   }
@@ -473,7 +462,6 @@ export class GameEngine {
     if (this.shake > 0) this.shake = Math.max(0, this.shake - clampedDt * 44);
     if (this.dramaticDim > 0) this.dramaticDim = Math.max(0, this.dramaticDim - clampedDt * 1.35);
 
-    // Capcom Super-Freeze pauses gameplay briefly while showcasing the Super Cut-In!
     if (this.superFreeze) {
       this.superFreeze.timer -= clampedDt;
       if (this.superFreeze.timer <= 0) {
@@ -509,13 +497,11 @@ export class GameEngine {
     } else if (this.phase === 'fighting') {
       this.roundTimer = Math.max(0, this.roundTimer - clampedDt);
 
-      // Passive Special Super charge over time for both fighters!
+      // Passive Special Super charge over time
       this._addSuper(this.red, PASSIVE_SUPER_PER_SEC * clampedDt);
       this._addSuper(this.blue, PASSIVE_SUPER_PER_SEC * clampedDt);
 
-      if (this.mode === 'cpu') {
-        this._updateCpuAI(clampedDt);
-      }
+      if (this.mode === 'cpu') this._updateCpuAI(clampedDt);
 
       this._updateFighter(this.red, this.blue, clampedDt);
       this._updateFighter(this.blue, this.red, clampedDt);
@@ -582,24 +568,22 @@ export class GameEngine {
       if (f.comboTimer <= 0) f.comboCount = 0;
     }
 
-    // Periodic flirty idle charm (winks & tiny floating romance hearts when neutral!)
+    // Periodic cute flirty idle wink & hearts!
     f.flirtTimer -= dt;
     if (f.flirtTimer <= 0 && !f.move && f.stunTimer <= 0 && !f.blocking) {
-      f.flirtTimer = 3.2 + Math.random() * 2.4;
-      f.winkTimer = 0.45;
+      f.flirtTimer = 3.0 + Math.random() * 2.4;
+      f.winkTimer = 0.50;
       if (f.side === 'red') {
-        this._spawnSparks(f.x + f.facing * 20, f.y - 102, '#ff77ba', 2, 'heart');
+        this._spawnSparks(f.x + f.facing * 20, f.y - 108, '#ff77ba', 2, 'heart');
       }
     }
 
-    // Glowing romance aura sparkles when Super is 100% ready!
     if (f.superMeter >= MAX_SUPER && Math.random() < dt * 8) {
       this._spawnSparks(f.x + (Math.random() - 0.5) * 46, f.y - 20 - Math.random() * 90, '#ffd479', 1, 'heart');
     }
 
     f.blocking = Boolean(f.inputs.block && f.grounded && !f.move && f.stunTimer <= 0 && f.dodgeTimer <= 0);
 
-    // Dodge roll / dash
     if (f.dodgeTimer > 0) {
       f.dodgeTimer = Math.max(0, f.dodgeTimer - dt);
       f.rollAngle += dt * 18 * f.dodgeDir;
@@ -609,8 +593,7 @@ export class GameEngine {
       f.rollAngle = 0;
     }
 
-    // Smooth responsive Street-Fighter walking/running!
-    const moveSpeed = f.side === 'red' ? 375 : 345;
+    const moveSpeed = f.side === 'red' ? 380 : 350;
     if (f.stunTimer <= 0 && f.dodgeTimer <= 0 && !f.move) {
       if (f.blocking) {
         f.vx *= Math.pow(0.001, dt);
@@ -633,7 +616,6 @@ export class GameEngine {
       this._updateFighterMove(f, opp, dt);
     }
 
-    // Physics
     f.x += f.vx * dt;
     if (!f.grounded) {
       f.vy += GRAVITY * dt;
@@ -650,15 +632,28 @@ export class GameEngine {
 
     f.x = Math.max(70, Math.min(STAGE_W - 70, f.x));
 
-    // Smooth secondary animation channels
+    // Smooth cartoon deformation channels!
     f.squashX += (1 - f.squashX) * Math.min(1, dt * 13);
     f.squashY += (1 - f.squashY) * Math.min(1, dt * 13);
 
-    const targetStretch = f.move && f.move.id === 'height_mog' && f.move.phase !== 'recover' ? 72 : 0;
-    f.stretchH += (targetStretch - f.stretchH) * Math.min(1, dt * 14);
+    // DRAMATIC EXPANDING BUTT FOR PEAR BOUNCE!!
+    const targetButt = f.move && f.move.id === 'pear_bounce' && f.move.phase === 'active'
+      ? 2.85
+      : f.move && f.move.id === 'pear_bounce' && f.move.phase === 'windup'
+      ? 1.55
+      : 1.0;
+    f.buttScale += (targetButt - f.buttScale) * Math.min(1, dt * 22);
+
+    // DRAMATIC PUFFED CHEEKS FOR COKE BURP!
+    const targetPuff = f.move && f.move.id === 'coke_burp' && f.move.phase !== 'recover' ? 1.0 : 0;
+    f.cheekPuff += (targetPuff - f.cheekPuff) * Math.min(1, dt * 18);
+
+    // DRAMATIC LOONEY-TUNES ACCORDION STRETCH FOR HEIGHT MOG!
+    const targetStretch = f.move && f.move.id === 'height_mog' && f.move.phase !== 'recover' ? 105 : 0;
+    f.stretchH += (targetStretch - f.stretchH) * Math.min(1, dt * 16);
 
     if (f.move && f.move.id === 'dj_spin' && f.move.phase === 'active') {
-      f.spinAngle += dt * 26;
+      f.spinAngle += dt * 28;
     } else {
       f.spinAngle = 0;
     }
@@ -681,7 +676,7 @@ export class GameEngine {
       if (m.timer <= 0) {
         m.phase = 'active';
         m.timer = m.activeDur;
-        f.squashX = 0.85;
+        f.squashX = 0.84;
         f.squashY = 1.18;
         this._onMoveActiveStart(f, opp, m);
       }
@@ -690,46 +685,54 @@ export class GameEngine {
 
     if (m.phase === 'active') {
       if (!m.hitDone) {
-        if (m.id === 'dj_spin') {
-          f.vx = f.facing * 350;
-          if (Math.random() < dt * 18) {
-            this._spawnSmear(f.x, f.y - 68, f.facing, '#ff69b4', 64);
-          }
-          if (Math.abs(f.x - opp.x) < 145 && Math.abs(f.y - opp.y) < 105) {
+        if (m.id === 'pear_bounce') {
+          // HIP-FIRST EXPANDING BUTT ROCKET BASH!!
+          f.vx = f.facing * 520;
+          if (Math.random() < dt * 26) this._spawnAfterimage(f);
+          const dx = (opp.x - f.x) * f.facing;
+          if (dx > -35 && dx < 165 && Math.abs(f.y - opp.y) < 110) {
             m.hitDone = true;
-            this._applyHit(f, opp, m, { knockX: 350, knockY: -230, stun: 0.28 });
+            f.vx = -f.facing * 140; // Cute bouncy recoil off Husbun!
+            this._applyHit(f, opp, m, { knockX: 540, knockY: -310, stun: 0.34 });
+          }
+        } else if (m.id === 'dj_spin') {
+          f.vx = f.facing * 360;
+          if (Math.random() < dt * 18) this._spawnSmear(f.x, f.y - 68, f.facing, '#ff69b4', 68);
+          if (Math.abs(f.x - opp.x) < 150 && Math.abs(f.y - opp.y) < 110) {
+            m.hitDone = true;
+            this._applyHit(f, opp, m, { knockX: 360, knockY: -240, stun: 0.28 });
           }
         } else if (m.id === 'coke_burp') {
           f.vx = -f.facing * 45;
           const dx = (opp.x - f.x) * f.facing;
-          if (dx > -20 && dx < 285 && Math.abs(f.y - opp.y) < 110) {
+          if (dx > -20 && dx < 295 && Math.abs(f.y - opp.y) < 115) {
             m.hitDone = true;
-            this._applyHit(f, opp, m, { knockX: 430, knockY: -180, stun: 0.44 });
+            this._applyHit(f, opp, m, { knockX: 440, knockY: -190, stun: 0.44 });
           }
         } else if (m.id === 'white_claw') {
-          f.vx = f.facing * 540;
+          f.vx = f.facing * 550;
           if (Math.random() < dt * 28) this._spawnAfterimage(f);
           const dx = (opp.x - f.x) * f.facing;
-          if (dx > -30 && dx < 155 && Math.abs(f.y - opp.y) < 105) {
+          if (dx > -30 && dx < 160 && Math.abs(f.y - opp.y) < 110) {
             m.hitDone = true;
-            this._applyHit(f, opp, m, { knockX: 330, knockY: -220, stun: 0.28 });
+            this._applyHit(f, opp, m, { knockX: 340, knockY: -220, stun: 0.28 });
           }
         } else if (m.id === 'height_mog') {
           if (m.timer <= m.activeDur * 0.55) {
             const dx = (opp.x - f.x) * f.facing;
-            if (dx > -40 && dx < 195 && Math.abs(f.y - opp.y) < 145) {
+            if (dx > -40 && dx < 205 && Math.abs(f.y - opp.y) < 155) {
               m.hitDone = true;
-              this._applyHit(f, opp, m, { knockX: 380, knockY: -320, stun: 0.34 });
+              this._applyHit(f, opp, m, { knockX: 390, knockY: -330, stun: 0.34 });
             }
           }
         } else if (m.id === 'forehead_kiss') {
-          f.vx = f.facing * 510;
-          if (Math.random() < dt * 22) this._spawnSparks(f.x, f.y - 80, '#ff8ec7', 1, 'heart');
+          f.vx = f.facing * 520;
+          if (Math.random() < dt * 24) this._spawnSparks(f.x, f.y - 84, '#ff8ec7', 1, 'heart');
           const dx = (opp.x - f.x) * f.facing;
-          if (dx > -25 && dx < 130 && Math.abs(f.y - opp.y) < 105) {
+          if (dx > -25 && dx < 135 && Math.abs(f.y - opp.y) < 110) {
             m.hitDone = true;
             f.vx = 0;
-            this._applyHit(f, opp, m, { knockX: 220, knockY: -150, stun: 0.46, isKiss: true });
+            this._applyHit(f, opp, m, { knockX: 220, knockY: -160, stun: 0.48, isKiss: true });
           }
         }
       }
@@ -744,48 +747,34 @@ export class GameEngine {
 
     if (m.phase === 'recover') {
       f.vx *= Math.pow(0.02, dt);
-      if (m.timer <= 0) {
-        f.move = null;
-      }
+      if (m.timer <= 0) f.move = null;
     }
   }
 
   _onMoveActiveStart(f, opp, m) {
     if (m.id === 'pear_bounce') {
+      // Hop & blast hip-first with giant expanding booty shockwave!!
       if (f.grounded) {
-        f.vy = -370;
+        f.vy = -240;
         f.grounded = false;
       }
-      f.vx = f.facing * 130;
-      this._spawnSmear(f.x + f.facing * 26, f.y - 72, f.facing, '#bef264', 58);
-      this.projectiles.push({
-        kind: 'pear',
-        owner: f.side,
-        x: f.x + f.facing * 42,
-        y: f.y - 74,
-        vx: f.facing * 450,
-        vy: -320,
-        radius: 24,
-        bounces: 0,
-        maxBounces: 2,
-        life: 2.0,
-        rot: 0,
-        move: m,
-      });
+      this._spawnShockwave(f.x + f.facing * 34, f.y - 52, '#ff77ba', 92);
+      this._spawnSmear(f.x + f.facing * 36, f.y - 54, f.facing, '#bef264', 76);
+      this.vfx.push({ kind: 'pear_bounce', side: f.side, x: f.x, y: f.y, dir: f.facing, t: 0, duration: 0.44 });
     } else if (m.id === 'mango_seed') {
-      // SUPER MANGO SEED COMET!
-      f.vx = -f.facing * 140;
+      // SUPER MANGO SEED SLINGSHOT COMET!
+      f.vx = -f.facing * 150;
       this.shake = Math.max(this.shake, 10);
-      this._spawnShockwave(f.x + f.facing * 42, f.y - 72, '#ffb703', 110);
-      this._spawnSmear(f.x + f.facing * 40, f.y - 72, f.facing, '#ffd479', 88);
+      this._spawnShockwave(f.x + f.facing * 42, f.y - 72, '#ffb703', 120);
+      this._spawnSmear(f.x + f.facing * 40, f.y - 72, f.facing, '#ffd479', 90);
       this.projectiles.push({
         kind: 'mango_seed',
         owner: f.side,
         x: f.x + f.facing * 52,
         y: f.y - 72,
-        vx: f.facing * 860,
+        vx: f.facing * 880,
         vy: 0,
-        radius: 36,
+        radius: 38,
         bounces: 0,
         maxBounces: 0,
         life: 1.6,
@@ -793,19 +782,19 @@ export class GameEngine {
         move: m,
       });
     } else if (m.id === 'eyp_report') {
-      // SUPER EYP REPORT METEOR BINDER!
+      // SUPER GIGANTIC SKYSCRAPER EYP REPORT STACK!
       f.vx = f.facing * 80;
       this.shake = Math.max(this.shake, 10);
       const dist = Math.max(170, Math.min(480, Math.abs(opp.x - f.x)));
-      this._spawnSmear(f.x + f.facing * 35, f.y - 102, f.facing, '#60a5fa', 84);
+      this._spawnSmear(f.x + f.facing * 35, f.y - 110, f.facing, '#60a5fa', 88);
       this.projectiles.push({
         kind: 'eyp_report',
         owner: f.side,
         x: f.x + f.facing * 36,
-        y: f.y - 110,
-        vx: f.facing * Math.max(390, dist * 1.18),
-        vy: -450,
-        radius: 44,
+        y: f.y - 118,
+        vx: f.facing * Math.max(400, dist * 1.18),
+        vy: -460,
+        radius: 48,
         bounces: 0,
         maxBounces: 0,
         life: 1.9,
@@ -814,22 +803,22 @@ export class GameEngine {
       });
     } else if (m.id === 'height_mog') {
       if (f.grounded) {
-        f.vy = -440;
+        f.vy = -450;
         f.grounded = false;
       }
       f.vx = f.facing * 270;
-      this._spawnSmear(f.x + f.facing * 36, f.y - 110, f.facing, '#ffd479', 78);
-      this.vfx.push({ kind: 'height_mog', side: f.side, x: f.x, y: f.y, dir: f.facing, t: 0, duration: 0.58 });
+      this._spawnSmear(f.x + f.facing * 36, f.y - 120, f.facing, '#ffd479', 82);
+      this.vfx.push({ kind: 'height_mog', side: f.side, x: f.x, y: f.y, dir: f.facing, t: 0, duration: 0.60 });
     } else if (m.id === 'dj_spin') {
-      this._spawnSmear(f.x, f.y - 68, f.facing, '#ff69b4', 72);
+      this._spawnSmear(f.x, f.y - 68, f.facing, '#ff69b4', 76);
       this.vfx.push({ kind: 'dj_spin', side: f.side, x: f.x, y: f.y, dir: f.facing, t: 0, duration: 0.48 });
     } else if (m.id === 'coke_burp') {
       this.vfx.push({ kind: 'coke_burp', side: f.side, x: f.x, y: f.y, dir: f.facing, t: 0, duration: 0.48 });
     } else if (m.id === 'white_claw') {
-      this._spawnSmear(f.x + f.facing * 42, f.y - 84, f.facing, '#38bdf8', 78);
+      this._spawnSmear(f.x + f.facing * 42, f.y - 88, f.facing, '#38bdf8', 82);
       this.vfx.push({ kind: 'white_claw', side: f.side, x: f.x, y: f.y, dir: f.facing, t: 0, duration: 0.44 });
     } else if (m.id === 'forehead_kiss') {
-      this.vfx.push({ kind: 'forehead_kiss', side: f.side, x: f.x, y: f.y, dir: f.facing, t: 0, duration: 0.45 });
+      this.vfx.push({ kind: 'forehead_kiss', side: f.side, x: f.x, y: f.y, dir: f.facing, t: 0, duration: 0.46 });
     }
   }
 
@@ -841,25 +830,12 @@ export class GameEngine {
       pr.y += pr.vy * dt;
       pr.rot += dt * (pr.kind === 'mango_seed' ? 16 : 8) * Math.sign(pr.vx || 1);
 
-      if (pr.kind === 'pear') {
-        pr.vy += 1250 * dt;
-        if (pr.y >= GROUND_Y - 18) {
-          pr.y = GROUND_Y - 18;
-          if (pr.bounces < pr.maxBounces) {
-            pr.bounces += 1;
-            pr.vy = -390;
-            this._spawnSparks(pr.x, GROUND_Y, '#bef264', 8, 'dot');
-          } else {
-            this.projectiles.splice(i, 1);
-            continue;
-          }
-        }
-      } else if (pr.kind === 'eyp_report') {
+      if (pr.kind === 'eyp_report') {
         pr.vy += 1280 * dt;
-        if (pr.y >= GROUND_Y - 24) {
-          this._spawnShockwave(pr.x, GROUND_Y - 10, '#60a5fa', 135);
-          this._spawnSparks(pr.x, GROUND_Y - 16, '#ffffff', 16, 'page');
-          this.shake = Math.max(this.shake, 9);
+        if (pr.y >= GROUND_Y - 26) {
+          this._spawnShockwave(pr.x, GROUND_Y - 10, '#60a5fa', 150);
+          this._spawnSparks(pr.x, GROUND_Y - 16, '#ffffff', 18, 'page');
+          this.shake = Math.max(this.shake, 10);
           this.projectiles.splice(i, 1);
           continue;
         }
@@ -867,22 +843,17 @@ export class GameEngine {
 
       const attacker = pr.owner === 'red' ? this.red : this.blue;
       const target = pr.owner === 'red' ? this.blue : this.red;
-      const targetCenterY = target.y - (target.side === 'red' ? 62 : 74);
-      const dx = pr.x - target.x;
-      const dy = pr.y - targetCenterY;
-      if (Math.hypot(dx, dy) < pr.radius + 38) {
+      const targetCenterY = target.y - (target.side === 'red' ? 62 : 76);
+      if (Math.hypot(pr.x - target.x, pr.y - targetCenterY) < pr.radius + 40) {
         const knock = pr.kind === 'mango_seed'
-          ? { knockX: 540, knockY: -340, stun: 0.36 }
-          : pr.kind === 'eyp_report'
-          ? { knockX: 460, knockY: -360, stun: 0.40 }
-          : { knockX: 250, knockY: -180, stun: 0.22 };
-
+          ? { knockX: 550, knockY: -340, stun: 0.36 }
+          : { knockX: 480, knockY: -360, stun: 0.40 };
         this._applyHit(attacker, target, pr.move, knock, pr.x, pr.y);
         this.projectiles.splice(i, 1);
         continue;
       }
 
-      if (pr.life <= 0 || pr.x < -100 || pr.x > STAGE_W + 100) {
+      if (pr.life <= 0 || pr.x < -110 || pr.x > STAGE_W + 110) {
         this.projectiles.splice(i, 1);
       }
     }
@@ -905,7 +876,7 @@ export class GameEngine {
     const iy = hitY ?? (defender.y - 72);
     const pushDir = defender.x >= attacker.x ? 1 : -1;
 
-    // 1. DODGE -> STRICTLY 0 DAMAGE + PERFECT DODGE BONUS!
+    // 1. DODGE -> STRICTLY 0 DAMAGE!
     if (defender.dodgeTimer > 0) {
       defender.counterWindow = 1.15;
       defender.heartEyesTimer = 0.9;
@@ -921,10 +892,10 @@ export class GameEngine {
       return;
     }
 
-    // 2. BLOCK -> VERY SMALL CHIP DAMAGE (~8%) + BIG SPECIAL SUPER CHARGE (+22%)!
+    // 2. BLOCK -> TINY CHIP DAMAGE (~8%) + BIG SPECIAL SUPER GAIN (+22%)!
     if (defender.blocking) {
       const chipDmg = Math.max(1, Math.round(move.damage * 0.08 * 10) / 10);
-      defender.hp = Math.max(1, defender.hp - chipDmg); // Never chip-KO on guard
+      defender.hp = Math.max(1, defender.hp - chipDmg);
       defender.vx = pushDir * (knockX * 0.42);
       defender.counterWindow = 0.85;
       this._addSuper(defender, BLOCK_SUPER_GAIN);
@@ -943,9 +914,7 @@ export class GameEngine {
     attacker.comboCount += 1;
     attacker.comboTimer = 2.4;
     const comboMult = attacker.comboCount >= 3 ? 1.15 : 1;
-    if (!move.isSuper) {
-      this._addSuper(attacker, HIT_SUPER_GAIN);
-    }
+    if (!move.isSuper) this._addSuper(attacker, HIT_SUPER_GAIN);
 
     defender.hp = Math.max(0, defender.hp - move.damage * comboMult);
     defender.hitFlash = 0.18;
@@ -955,34 +924,34 @@ export class GameEngine {
       defender.vy = knockY;
       defender.grounded = false;
     }
-    defender.squashX = 0.78;
-    defender.squashY = 1.24;
+    defender.squashX = 0.76;
+    defender.squashY = 1.26;
     defender.move = null;
 
     if (isKiss) {
-      defender.blushTimer = 2.2;
-      defender.heartEyesTimer = 1.5;
-      this.vfx.push({ kind: 'kiss_bloom', x: defender.x, y: defender.y - 108, t: 0, duration: 0.72 });
+      defender.blushTimer = 2.4;
+      defender.heartEyesTimer = 1.7;
+      this.vfx.push({ kind: 'kiss_bloom', x: defender.x, y: defender.y - 114, t: 0, duration: 0.78 });
     }
 
     if (defender.hp <= 0) {
       this._triggerRoundEnd(attacker.side, defender, false);
-      this._spawnHitSpark(ix, iy, '#ffd479', 96);
+      this._spawnHitSpark(ix, iy, '#ffd479', 98);
       this._spawnShockwave(ix, iy, '#ffd479', 200);
-      this._spawnShockwave(ix, iy, move.color, 140);
+      this._spawnShockwave(ix, iy, move.color, 145);
       this._spawnSparks(ix, iy, '#ffd479', 28, 'heart');
       this._spawnCallout(ix, iy - 50, 'K.O.!! 💕', '#ffd479', 1.55);
       this._emitNetEvent('ko', { x: ix, y: iy, color: move.color });
     } else {
       sound.playHit(move.heavy || move.isCounter || move.isSuper);
-      this.hitStop = move.isSuper ? 0.12 : move.isCounter ? 0.085 : move.heavy ? 0.055 : 0.038;
-      this.shake = move.isSuper ? 20 : move.isCounter ? 15 : move.heavy ? 10 : 6;
-      this._spawnHitSpark(ix, iy, move.isSuper ? '#ffd479' : move.color, move.isSuper ? 88 : move.heavy ? 64 : 46);
-      this._spawnShockwave(ix, iy, move.isCounter ? '#ffd479' : move.color, move.isSuper ? 160 : move.heavy ? 120 : 84);
+      this.hitStop = move.isSuper ? 0.12 : move.isCounter ? 0.085 : move.heavy ? 0.06 : 0.038;
+      this.shake = move.isSuper ? 20 : move.isCounter ? 15 : move.heavy ? 11 : 6;
+      this._spawnHitSpark(ix, iy, move.isSuper ? '#ffd479' : move.color, move.isSuper ? 88 : move.heavy ? 66 : 46);
+      this._spawnShockwave(ix, iy, move.isCounter ? '#ffd479' : move.color, move.isSuper ? 160 : move.heavy ? 125 : 84);
       this._spawnMoveHitParticles(ix, iy, move.id, move.color);
 
       const label = move.isCounter ? `COUNTER ${move.callout}` : move.callout;
-      this._spawnCallout(ix, iy - 38, label, move.isCounter || move.isSuper ? '#ffd479' : move.color, move.isSuper ? 1.25 : 0.96);
+      this._spawnCallout(ix, iy - 38, label, move.isCounter || move.isSuper ? '#ffd479' : move.color, move.isSuper ? 1.25 : 0.98);
       if (attacker.comboCount >= 2) {
         this._spawnCallout(ix, iy - 84, `${attacker.comboCount} HIT LOVE COMBO! ♥`, '#ff8ec7', 0.84);
       }
@@ -1009,8 +978,8 @@ export class GameEngine {
     loser.blocking = false;
     loser.move = null;
     const fallDir = loser.x >= winner.x ? 1 : -1;
-    loser.vx = fallDir * 400;
-    loser.vy = -440;
+    loser.vx = fallDir * 410;
+    loser.vy = -450;
     loser.grounded = false;
 
     this.phase = 'ko';
@@ -1056,14 +1025,14 @@ export class GameEngine {
       f.vx *= Math.pow(0.01, dt);
       f.victoryKissTimer -= dt;
       if (f.victoryKissTimer <= 0) {
-        f.victoryKissTimer = 0.26;
-        this._spawnSparks(f.x + f.facing * 20, f.y - 102, '#ff69b4', 3, 'heart');
+        f.victoryKissTimer = 0.25;
+        this._spawnSparks(f.x + f.facing * 20, f.y - 108, '#ff69b4', 3, 'heart');
       }
     }
   }
 
   // ==========================
-  // SMART 2D FIGHTER CPU AI
+  // SMART CPU AI
   // ==========================
   _updateCpuAI(dt) {
     const cpuSide = this.humanSide === 'red' ? 'blue' : 'red';
@@ -1088,7 +1057,7 @@ export class GameEngine {
       hard:   { reaction: 0.22, defenseChance: 0.70, aggro: 0.84 },
     }[this.cpuDifficulty] || { reaction: 0.35, defenseChance: 0.46, aggro: 0.65 };
 
-    const incomingProj = this.projectiles.some((pr) => pr.owner !== cpuSide && Math.abs(pr.x - cpu.x) < 160);
+    const incomingProj = this.projectiles.some((pr) => pr.owner !== cpuSide && Math.abs(pr.x - cpu.x) < 165);
     if ((incomingProj || (player.move && absDist < 200)) && !cpu.move && cpu.stunTimer <= 0) {
       if (Math.random() < cfg.defenseChance * dt * 15) {
         const r = Math.random();
@@ -1108,20 +1077,19 @@ export class GameEngine {
     if (this.cpuDecisionTimer <= 0) {
       this.cpuDecisionTimer = cfg.reaction * (0.65 + Math.random() * 0.8);
 
-      if (absDist > 260) this.cpuMoveIntent = Math.sign(dx);
+      if (absDist > 230) this.cpuMoveIntent = Math.sign(dx);
       else if (absDist < 85) this.cpuMoveIntent = -Math.sign(dx);
       else this.cpuMoveIntent = Math.random() < 0.5 ? Math.sign(dx) : 0;
 
-      // Fire Special Super when 100% charged!
       if (cpu.superMeter >= MAX_SUPER && Math.random() < 0.72) {
         this.triggerMove(cpuSide, 3);
         return;
       }
 
       if (Math.random() < cfg.aggro) {
-        if (absDist > 210) {
-          const farMoves = cpuSide === 'red' ? [0, 1] : [0, 2];
-          this.triggerMove(cpuSide, farMoves[Math.floor(Math.random() * farMoves.length)]);
+        if (absDist > 200) {
+          const rushMoves = [0, 1];
+          this.triggerMove(cpuSide, rushMoves[Math.floor(Math.random() * rushMoves.length)]);
         } else {
           this.triggerMove(cpuSide, Math.floor(Math.random() * 3));
         }
@@ -1138,7 +1106,7 @@ export class GameEngine {
   // CAPCOM VFX HELPERS
   // ==========================
   _spawnSmear(x, y, dir, color, radius) {
-    this.smears.push({ x, y, dir, color, radius, life: 0.18, maxLife: 0.18 });
+    this.smears.push({ x, y, dir, color, radius, life: 0.20, maxLife: 0.20 });
   }
 
   _spawnHitSpark(x, y, color, size) {
@@ -1183,11 +1151,14 @@ export class GameEngine {
     if (moveId === 'forehead_kiss') {
       this._spawnSparks(x, y - 20, '#ff69b4', 18, 'heart');
       this._spawnSparks(x, y - 10, '#ffd479', 10, 'heart');
+    } else if (moveId === 'pear_bounce') {
+      this._spawnSparks(x, y, '#ff77ba', 14, 'heart');
+      this._spawnSparks(x, y, '#bef264', 14, 'dot');
     } else if (moveId === 'dj_spin') {
       this._spawnSparks(x, y, '#ff69b4', 8, 'note');
       this._spawnSparks(x, y, '#38bdf8', 8, 'note');
     } else if (moveId === 'eyp_report') {
-      this._spawnSparks(x, y, '#ffffff', 16, 'page');
+      this._spawnSparks(x, y, '#ffffff', 18, 'page');
       this._spawnSparks(x, y, '#3b82f6', 12, 'dot');
     } else if (moveId === 'coke_burp') {
       this._spawnSparks(x, y, '#8b4513', 12, 'bubble');
@@ -1277,11 +1248,8 @@ export class GameEngine {
       const p = this.particles[i];
       p.x += p.vx * dt;
       p.y += p.vy * dt;
-      if (p.shape === 'dust') {
-        p.size += dt * 16;
-      } else {
-        p.vy += (p.shape === 'bubble' || p.shape === 'heart' ? -90 : 620) * dt;
-      }
+      if (p.shape === 'dust') p.size += dt * 16;
+      else p.vy += (p.shape === 'bubble' || p.shape === 'heart' ? -90 : 620) * dt;
       p.rot += dt * 5;
       p.life -= dt;
       if (p.life <= 0) this.particles.splice(i, 1);
@@ -1323,7 +1291,9 @@ export class GameEngine {
       koState: f.koState,
       koFallProgress: f.koFallProgress,
       runCycle: f.runCycle,
-      stretchH: f.stretchH,
+      buttScale: Math.round(f.buttScale * 100) / 100,
+      cheekPuff: Math.round(f.cheekPuff * 100) / 100,
+      stretchH: Math.round(f.stretchH),
       spinAngle: f.spinAngle,
       roundsWon: f.roundsWon,
       comboCount: f.comboCount,
@@ -1392,7 +1362,7 @@ export class GameEngine {
     } else if (ev.kind === 'move_start') {
       sound.playMove(ev.moveId);
       if (ev.moveId === 'height_mog') this.dramaticDim = 0.48;
-      if (['height_mog', 'dj_spin', 'coke_burp', 'white_claw', 'forehead_kiss'].includes(ev.moveId)) {
+      if (['pear_bounce', 'height_mog', 'dj_spin', 'coke_burp', 'white_claw', 'forehead_kiss'].includes(ev.moveId)) {
         this.vfx.push({ kind: ev.moveId, side: ev.side, x: ev.x, y: ev.y, dir: ev.dir, t: 0, duration: 0.48 });
       }
     } else if (ev.kind === 'dodge') {
@@ -1411,18 +1381,18 @@ export class GameEngine {
       this.shake = Math.max(this.shake, 4);
     } else if (ev.kind === 'hit') {
       sound.playHit(ev.heavy || ev.counter);
-      this.shake = ev.counter ? 15 : ev.heavy ? 10 : 6;
-      this._spawnHitSpark(ev.x, ev.y, ev.color, ev.heavy ? 64 : 46);
-      this._spawnShockwave(ev.x, ev.y, ev.counter ? '#ffd479' : ev.color, ev.heavy ? 120 : 84);
+      this.shake = ev.counter ? 15 : ev.heavy ? 11 : 6;
+      this._spawnHitSpark(ev.x, ev.y, ev.color, ev.heavy ? 66 : 46);
+      this._spawnShockwave(ev.x, ev.y, ev.counter ? '#ffd479' : ev.color, ev.heavy ? 125 : 84);
       this._spawnMoveHitParticles(ev.x, ev.y, ev.moveId, ev.color);
-      this._spawnCallout(ev.x, ev.y - 38, ev.word, ev.counter ? '#ffd479' : ev.color, 0.96);
+      this._spawnCallout(ev.x, ev.y - 38, ev.word, ev.counter ? '#ffd479' : ev.color, 0.98);
       if (ev.combo >= 2) {
         this._spawnCallout(ev.x, ev.y - 84, `${ev.combo} HIT LOVE COMBO! ♥`, '#ff8ec7', 0.84);
       }
     } else if (ev.kind === 'ko') {
       sound.playKO();
       this.shake = 22;
-      this._spawnHitSpark(ev.x, ev.y, '#ffd479', 96);
+      this._spawnHitSpark(ev.x, ev.y, '#ffd479', 98);
       this._spawnShockwave(ev.x, ev.y, '#ffd479', 200);
       this._spawnSparks(ev.x, ev.y, '#ffd479', 28, 'heart');
       this._spawnCallout(ev.x, ev.y - 50, 'K.O.!! 💕', '#ffd479', 1.55);
@@ -1453,7 +1423,7 @@ export class GameEngine {
   }
 
   // ==========================
-  // RENDERING — CAPCOM CEL-SHADED ROMANTIC FIGHTER!
+  // RENDERING
   // ==========================
   render() {
     const ctx = this.ctx;
@@ -1481,11 +1451,11 @@ export class GameEngine {
 
     const redOnTop = Boolean(this.red.move && this.red.move.phase === 'active');
     if (redOnTop) {
-      this._drawHusbunCapcom(ctx, this.blue);
-      this._drawWifebunCapcom(ctx, this.red);
+      this._drawHusbunBugsStyle(ctx, this.blue);
+      this._drawWifebunLolaStyle(ctx, this.red);
     } else {
-      this._drawWifebunCapcom(ctx, this.red);
-      this._drawHusbunCapcom(ctx, this.blue);
+      this._drawWifebunLolaStyle(ctx, this.red);
+      this._drawHusbunBugsStyle(ctx, this.blue);
     }
 
     this._drawSmears(ctx);
@@ -1498,10 +1468,8 @@ export class GameEngine {
 
     ctx.restore();
 
-    // Screen-space petals
     this._drawPetals(ctx);
 
-    // Capcom Super-Freeze Dramatic Cut-In Overlay!
     if (this.superFreeze) {
       this._drawSuperFreezeOverlay(ctx, this.superFreeze);
     }
@@ -1512,7 +1480,6 @@ export class GameEngine {
   _drawSuperFreezeOverlay(ctx, sf) {
     const p = 1 - sf.timer / sf.maxTimer;
     ctx.save();
-    // Radiating anime speed lines
     ctx.translate(W * 0.5, H * 0.48);
     ctx.strokeStyle = sf.side === 'red' ? 'rgba(255, 119, 186, 0.35)' : 'rgba(96, 165, 250, 0.35)';
     ctx.lineWidth = 3;
@@ -1524,7 +1491,6 @@ export class GameEngine {
       ctx.stroke();
     }
 
-    // Diagonal Capcom Super Banner!
     ctx.rotate(-0.08);
     const bandH = 92;
     const grad = ctx.createLinearGradient(-W, 0, W, 0);
@@ -1566,18 +1532,14 @@ export class GameEngine {
     moonGlow.addColorStop(0.6, 'rgba(255, 130, 190, 0.16)');
     moonGlow.addColorStop(1, 'rgba(255, 119, 186, 0)');
     ctx.fillStyle = moonGlow;
-    ctx.beginPath();
-    ctx.arc(moonX, moonY, 165, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(moonX, moonY, 165, 0, Math.PI * 2); ctx.fill();
 
     for (let i = 0; i < 36; i++) {
       const sx = (((i * 173) - (this.camX - STAGE_W * 0.5) * 0.05) % W + W) % W;
       const sy = 16 + ((i * 47) % 210);
       const tw = 0.25 + 0.65 * (0.5 + 0.5 * Math.sin(this.time * 2.4 + i));
       ctx.fillStyle = i % 3 === 0 ? `rgba(255, 220, 140, ${tw})` : `rgba(255, 210, 236, ${tw})`;
-      ctx.beginPath();
-      ctx.arc(sx, sy, i % 5 === 0 ? 2.2 : 1.3, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(sx, sy, i % 5 === 0 ? 2.2 : 1.3, 0, Math.PI * 2); ctx.fill();
     }
 
     const offsetFar = -(this.camX - STAGE_W * 0.5) * 0.22;
@@ -1617,7 +1579,6 @@ export class GameEngine {
     ctx.quadraticCurveTo(495, 230, 530, 320);
     ctx.closePath();
     ctx.fill();
-
     ctx.restore();
   }
 
@@ -1625,82 +1586,52 @@ export class GameEngine {
     const treePositions = [180, 520, 960, 1300];
     treePositions.forEach((tx, idx) => {
       const sway = Math.sin(this.time * 1.3 + idx * 1.4) * 5;
-      ctx.strokeStyle = '#3b1c26';
-      ctx.lineWidth = 18;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(tx, GROUND_Y);
-      ctx.quadraticCurveTo(tx - 10, GROUND_Y - 110, tx + sway, GROUND_Y - 210);
-      ctx.stroke();
-
+      ctx.strokeStyle = '#3b1c26'; ctx.lineWidth = 18; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(tx, GROUND_Y); ctx.quadraticCurveTo(tx - 10, GROUND_Y - 110, tx + sway, GROUND_Y - 210); ctx.stroke();
       ctx.lineWidth = 8;
       ctx.beginPath();
-      ctx.moveTo(tx + sway * 0.5, GROUND_Y - 140);
-      ctx.lineTo(tx - 65 + sway, GROUND_Y - 195);
-      ctx.moveTo(tx + sway * 0.5, GROUND_Y - 155);
-      ctx.lineTo(tx + 72 + sway, GROUND_Y - 205);
+      ctx.moveTo(tx + sway * 0.5, GROUND_Y - 140); ctx.lineTo(tx - 65 + sway, GROUND_Y - 195);
+      ctx.moveTo(tx + sway * 0.5, GROUND_Y - 155); ctx.lineTo(tx + 72 + sway, GROUND_Y - 205);
       ctx.stroke();
-
-      const blossoms = [
+      [
         [tx + sway, GROUND_Y - 235, 68, '#ff99cc'],
         [tx - 58 + sway, GROUND_Y - 205, 52, '#ffb8dc'],
         [tx + 60 + sway, GROUND_Y - 210, 54, '#ff85c0'],
         [tx - 20 + sway, GROUND_Y - 255, 48, '#ffd4e8'],
-      ];
-      blossoms.forEach(([bx, by, br, col]) => {
-        ctx.fillStyle = col;
-        ctx.globalAlpha = 0.88;
-        ctx.beginPath();
-        ctx.arc(bx, by, br, 0, Math.PI * 2);
-        ctx.fill();
+      ].forEach(([bx, by, br, col]) => {
+        ctx.fillStyle = col; ctx.globalAlpha = 0.88;
+        ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2); ctx.fill();
       });
       ctx.globalAlpha = 1;
     });
 
     const postXs = [100, 420, 740, 1060, 1380];
     postXs.forEach((px) => {
-      ctx.fillStyle = '#36172a';
-      ctx.fillRect(px - 6, GROUND_Y - 240, 12, 240);
-      ctx.fillStyle = '#ffd479';
-      ctx.shadowColor = '#ffd479';
-      ctx.shadowBlur = 16;
-      ctx.beginPath();
-      ctx.roundRect(px - 10, GROUND_Y - 226, 20, 24, 6);
-      ctx.fill();
+      ctx.fillStyle = '#36172a'; ctx.fillRect(px - 6, GROUND_Y - 240, 12, 240);
+      ctx.fillStyle = '#ffd479'; ctx.shadowColor = '#ffd479'; ctx.shadowBlur = 16;
+      ctx.beginPath(); ctx.roundRect(px - 10, GROUND_Y - 226, 20, 24, 6); ctx.fill();
       ctx.shadowBlur = 0;
     });
 
     for (let i = 0; i < postXs.length - 1; i++) {
-      const x1 = postXs[i];
-      const x2 = postXs[i + 1];
-      const mx = (x1 + x2) * 0.5;
-      ctx.strokeStyle = 'rgba(255, 212, 121, 0.35)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(x1, GROUND_Y - 234);
-      ctx.quadraticCurveTo(mx, GROUND_Y - 178, x2, GROUND_Y - 234);
-      ctx.stroke();
-
+      const x1 = postXs[i], x2 = postXs[i + 1], mx = (x1 + x2) * 0.5;
+      ctx.strokeStyle = 'rgba(255, 212, 121, 0.35)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x1, GROUND_Y - 234); ctx.quadraticCurveTo(mx, GROUND_Y - 178, x2, GROUND_Y - 234); ctx.stroke();
       for (let b = 1; b <= 6; b++) {
         const t = b / 7;
         const bx = x1 + (x2 - x1) * t;
         const by = (1 - t) * (1 - t) * (GROUND_Y - 234) + 2 * (1 - t) * t * (GROUND_Y - 178) + t * t * (GROUND_Y - 234);
         const glow = 0.65 + 0.35 * Math.sin(this.time * 3.2 + b + i);
         ctx.fillStyle = b % 2 === 0 ? `rgba(255, 224, 140, ${glow})` : `rgba(255, 145, 205, ${glow})`;
-        ctx.shadowColor = b % 2 === 0 ? '#ffd479' : '#ff77ba';
-        ctx.shadowBlur = 10;
-        ctx.beginPath();
-        ctx.arc(bx, by, 4, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.shadowColor = b % 2 === 0 ? '#ffd479' : '#ff77ba'; ctx.shadowBlur = 10;
+        ctx.beginPath(); ctx.arc(bx, by, 4, 0, Math.PI * 2); ctx.fill();
       }
       ctx.shadowBlur = 0;
     }
 
     ctx.fillStyle = 'rgba(60, 24, 48, 0.85)';
     ctx.fillRect(0, GROUND_Y - 42, STAGE_W, 7);
-    for (let rx = 20; rx < STAGE_W; rx += 56) {
-      ctx.fillRect(rx, GROUND_Y - 42, 6, 42);
-    }
+    for (let rx = 20; rx < STAGE_W; rx += 56) ctx.fillRect(rx, GROUND_Y - 42, 6, 42);
   }
 
   _drawBoardwalkFloor(ctx) {
@@ -1714,81 +1645,71 @@ export class GameEngine {
     ctx.fillStyle = 'rgba(255, 212, 165, 0.35)';
     ctx.fillRect(0, GROUND_Y, STAGE_W, 4);
 
-    ctx.strokeStyle = 'rgba(20, 6, 20, 0.45)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(20, 6, 20, 0.45)'; ctx.lineWidth = 2;
     for (let px = 0; px <= STAGE_W; px += 64) {
-      ctx.beginPath();
-      ctx.moveTo(px, GROUND_Y);
-      ctx.lineTo(px + (px - STAGE_W * 0.5) * 0.12, H + 40);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px, GROUND_Y); ctx.lineTo(px + (px - STAGE_W * 0.5) * 0.12, H + 40); ctx.stroke();
     }
-
     this._drawHeart(ctx, STAGE_W * 0.5, GROUND_Y + 32, 18, 'rgba(255, 130, 195, 0.35)');
   }
 
   // ==========================================================
-  // CAPCOM / STREET FIGHTER CEL-SHADED RIG 1: WIFEBUN
-  // Alluring, flirty, expressive caramel-brown bunny fighter!
+  // CHARACTER 1: WIFEBUN — Cute, Sassy, Lola-Bunny-Inspired Honey-Caramel Bunny!
+  // Includes dramatic expanding booty during "PEAR BOUNCE"!!
   // ==========================================================
-  _drawWifebunCapcom(ctx, f) {
+  _drawWifebunLolaStyle(ctx, f) {
     const dir = f.facing;
-    const furBase = '#b87a4e';
-    const furHi = '#e3ad82';
-    const furShade = '#7e4b28';
+    const furBase = '#c88958';
+    const furHi = '#ecc097';
+    const furShade = '#8f552d';
+    const cream = '#fff3e6';
     const ink = '#29121e';
-    const silkPink = '#ff5ca8';
-    const silkDark = '#b81d68';
-    const cream = '#fff1e8';
+    const pink = '#ff5ca8';
+    const pinkDark = '#c2186a';
 
-    // Capcom-style rhythmic martial-arts bounce + flirty hip sway!
     const t = this.time * 5.8;
     const isMoving = Math.abs(f.vx) > 25 && f.grounded && !f.move;
     const stride = Math.sin(f.runCycle);
-    const hipSway = isMoving ? stride * 5 : Math.sin(t) * 4.5;
+    const hipSway = isMoving ? stride * 5 : Math.sin(t) * 5.2;
     const bounceY = f.koState
       ? 16 * f.koFallProgress
       : !f.grounded
       ? 0
       : isMoving
       ? -Math.abs(stride) * 8
-      : Math.sin(t * 2) * 3.2;
+      : Math.sin(t * 2) * 3.0;
 
+    const isPearBounce = Boolean(f.move && f.move.id === 'pear_bounce' && f.move.phase !== 'recover');
     const isAttacking = Boolean(f.move && f.move.phase === 'active');
     const isWindup = Boolean(f.move && f.move.phase === 'windup');
 
     ctx.save();
     ctx.translate(f.x, f.y);
 
-    // Dynamic ground shadow
+    // Ground shadow
     const airScale = Math.max(0.45, 1 - (GROUND_Y - f.y) / 360);
     ctx.fillStyle = 'rgba(18, 4, 22, 0.42)';
-    ctx.beginPath();
-    ctx.ellipse(0, GROUND_Y - f.y + 4, 38 * airScale, 10 * airScale, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, GROUND_Y - f.y + 4, 38 * airScale, 10 * airScale, 0, 0, Math.PI * 2); ctx.fill();
 
     if (f.dodgeTimer > 0) ctx.globalAlpha = 0.78;
 
-    // Golden-rose aura when Super 100% or Counter-Ready
     if ((f.counterWindow > 0 || f.superMeter >= MAX_SUPER) && !f.koState) {
       ctx.save();
       ctx.strokeStyle = f.counterWindow > 0 ? 'rgba(255, 212, 121, 0.92)' : 'rgba(255, 119, 186, 0.65)';
       ctx.lineWidth = f.counterWindow > 0 ? 4.5 : 3;
       ctx.shadowColor = f.counterWindow > 0 ? '#ffd479' : '#ff69b4';
       ctx.shadowBlur = 20;
-      ctx.beginPath();
-      ctx.ellipse(0, -64, 46, 72, 0, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(0, -68, 48, 76, 0, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
     }
 
     ctx.translate(0, bounceY);
     if (f.rollAngle !== 0) {
-      ctx.translate(0, -56);
-      ctx.rotate(f.rollAngle);
-      ctx.translate(0, 56);
+      ctx.translate(0, -58); ctx.rotate(f.rollAngle); ctx.translate(0, 58);
     }
 
-    ctx.scale(dir * f.squashX, f.squashY);
+    // Flip horizontally! During PEAR BOUNCE she spins hip-first toward opponent and looks cheekily back over her shoulder!!
+    const bodyFlip = isPearBounce ? -dir : dir;
+    ctx.scale(bodyFlip * f.squashX, f.squashY);
 
     if (f.spinAngle !== 0) {
       const sx = Math.cos(f.spinAngle);
@@ -1800,119 +1721,118 @@ export class GameEngine {
       ctx.rotate(-0.46 * f.koFallProgress);
     }
 
-    // === 2-SEGMENT ARTICULATED LEGS (thigh + calf + thigh-high stockings + heeled boots) ===
-    const backHipA = f.koState ? 0.85 : !f.grounded ? 0.45 : isMoving ? -stride * 0.65 : -0.26;
-    const backKneeA = f.koState ? 0.4 : !f.grounded ? 0.7 : isMoving ? Math.max(0, stride * 0.75) : 0.24;
-    const frontHipA = f.koState ? 1.05 : !f.grounded ? -0.35 : isAttacking && f.move.id === 'pear_bounce' ? -1.1 : isMoving ? stride * 0.65 : 0.24;
-    const frontKneeA = f.koState ? 0.35 : !f.grounded ? 0.85 : isMoving ? Math.max(0, -stride * 0.75) : 0.14;
+    // === SLEEK ATHLETIC LOLA-STYLE LEGS ===
+    const backHipA = f.koState ? 0.85 : isPearBounce ? -0.35 : !f.grounded ? 0.45 : isMoving ? -stride * 0.65 : -0.24;
+    const backKneeA = f.koState ? 0.4 : !f.grounded ? 0.65 : isMoving ? Math.max(0, stride * 0.75) : 0.22;
+    const frontHipA = f.koState ? 1.05 : isPearBounce ? 0.45 : !f.grounded ? -0.32 : isMoving ? stride * 0.65 : 0.22;
+    const frontKneeA = f.koState ? 0.35 : !f.grounded ? 0.75 : isMoving ? Math.max(0, -stride * 0.75) : 0.14;
 
-    this._drawSculptedFemLeg(ctx, -6 + hipSway * 0.3, -46, backHipA, backKneeA, furShade, '#f0d6e4', silkDark, ink);
+    this._drawLolaLeg(ctx, -6 + hipSway * 0.3, -48, backHipA, backKneeA, furShade, '#f5d9e8', pinkDark, ink);
 
-    // === FLUFFY COTTON TAIL (sways with hips!) ===
-    ctx.fillStyle = '#fff5f0';
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(-22 + hipSway * 0.6, -48 + Math.sin(t * 2) * 2, 12.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    // === BACK ARM ===
+    const backShA = f.blocking ? -1.15 : isPearBounce ? 0.6 : isAttacking ? -0.8 : -0.45 + Math.sin(t) * 0.14;
+    this._drawLolaArm(ctx, 9, -86, backShA, -0.75, furShade, pinkDark, ink);
 
-    // === BACK ARM (2-segment articulated!) ===
-    const backShA = f.blocking ? -1.15 : isAttacking ? -0.8 : isWindup ? 0.7 : -0.5 + Math.sin(t) * 0.15;
-    const backElA = f.blocking ? -1.1 : -0.7;
-    this._drawSculptedFemArm(ctx, 10, -82, backShA, backElA, furShade, silkDark, ink);
-
-    // === SCULPTED CURVY FEMININE TORSO & OFF-SHOULDER SILK TOP ===
+    // === CURVY LOLA HOURGLASS TORSO + DRAMATIC EXPANDING PEAR-BOUNCE BOOTY!! ===
     ctx.save();
     ctx.translate(hipSway * 0.35, 0);
-    ctx.rotate(isAttacking ? 0.14 : isWindup ? -0.14 : Math.sin(t) * 0.045);
+    ctx.rotate(isPearBounce ? 0.34 : isAttacking ? 0.12 : isWindup ? -0.14 : Math.sin(t) * 0.045);
 
-    // Slender caramel waist & curves
+    // DRAMATICALLY EXPANDING BOOTY / HIPS (normal cute curve at 1.0, MASSIVE bouncy pear balloon at 2.85 during Pear Bounce!!)
+    const bs = f.buttScale || 1;
+    ctx.save();
+    ctx.translate(-10 - (bs - 1) * 14, -46);
+    const buttGrad = ctx.createRadialGradient(-4 * bs, -4 * bs, 4, 0, 0, 18 * bs);
+    buttGrad.addColorStop(0, '#ff99cc');
+    buttGrad.addColorStop(0.6, pink);
+    buttGrad.addColorStop(1, pinkDark);
+    ctx.fillStyle = f.hitFlash > 0 ? '#ffffff' : buttGrad;
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 2.6;
+    if (bs > 1.3) {
+      ctx.shadowColor = '#ff77ba';
+      ctx.shadowBlur = 18;
+    }
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 15 * bs, 14 * bs, -0.18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // Cute glossy highlight on expanded booty!
+    ctx.fillStyle = 'rgba(255, 235, 248, 0.45)';
+    ctx.beginPath();
+    ctx.ellipse(-4 * bs, -4 * bs, 5 * bs, 3.2 * bs, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Fluffy white cotton bunny tail sitting right on top of the booty!
+    ctx.fillStyle = '#fff8f2';
+    ctx.beginPath();
+    ctx.arc(-11 * bs, -7 * bs * 0.65, 9 + (bs - 1) * 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // Slender caramel waist & feminine torso
     ctx.fillStyle = f.hitFlash > 0 ? '#ffffff' : furBase;
     ctx.strokeStyle = ink;
     ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.moveTo(-12, -88);
-    ctx.bezierCurveTo(-17, -72, -10, -60, -13, -48);
-    ctx.lineTo(15, -48);
-    ctx.bezierCurveTo(13, -60, 19, -74, 14, -88);
+    ctx.moveTo(-11, -92);
+    ctx.bezierCurveTo(-16, -74, -8, -62, -12, -50);
+    ctx.lineTo(14, -50);
+    ctx.bezierCurveTo(11, -62, 18, -76, 13, -92);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // Romantic blush-rose off-shoulder crop top with satin sheen!
-    const topGrad = ctx.createLinearGradient(-16, -88, 16, -62);
+    // Soft cream belly curve
+    ctx.fillStyle = cream;
+    ctx.beginPath(); ctx.ellipse(4, -66, 7, 13, 0.08, 0, Math.PI * 2); ctx.fill();
+
+    // Lola-inspired sporty-glam fitted pink & cream crop tank!
+    const topGrad = ctx.createLinearGradient(-15, -92, 16, -66);
     topGrad.addColorStop(0, '#ffd4e8');
-    topGrad.addColorStop(0.45, silkPink);
-    topGrad.addColorStop(1, silkDark);
+    topGrad.addColorStop(0.45, pink);
+    topGrad.addColorStop(1, pinkDark);
     ctx.fillStyle = f.hitFlash > 0 ? '#ffffff' : topGrad;
     ctx.beginPath();
-    ctx.moveTo(-15, -84);
-    ctx.quadraticCurveTo(2, -90, 17, -82);
-    ctx.quadraticCurveTo(19, -70, 14, -64);
-    ctx.quadraticCurveTo(0, -61, -14, -65);
+    ctx.moveTo(-13, -90);
+    ctx.quadraticCurveTo(2, -94, 15, -88);
+    ctx.quadraticCurveTo(18, -74, 13, -68);
+    ctx.quadraticCurveTo(0, -65, -13, -69);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+    // Cream athletic trim + gold heart emblem
+    ctx.strokeStyle = cream; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.moveTo(-12, -69); ctx.quadraticCurveTo(0, -66, 13, -68); ctx.stroke();
+    this._drawHeart(ctx, 5, -80, 4.8, '#ffd479');
 
-    // Little gold heart pendant at neckline
-    this._drawHeart(ctx, 4, -77, 4.5, '#ffd479');
-
-    // === FLOWING PLEATED MINI-SKIRT (dynamic sway!) ===
-    const skirtSway = hipSway * 0.9 - f.vx * 0.015;
-    const skirtGrad = ctx.createLinearGradient(-24, -54, 24, -28);
-    skirtGrad.addColorStop(0, '#ff85c0');
-    skirtGrad.addColorStop(0.55, silkPink);
-    skirtGrad.addColorStop(1, silkDark);
-    ctx.fillStyle = f.hitFlash > 0 ? '#ffffff' : skirtGrad;
-    ctx.beginPath();
-    ctx.moveTo(-14, -52);
-    ctx.lineTo(15, -52);
-    ctx.quadraticCurveTo(22 + skirtSway * 0.5, -39, 27 + skirtSway, -28);
-    ctx.quadraticCurveTo(2 + skirtSway * 0.4, -24, -25 + skirtSway, -29);
-    ctx.quadraticCurveTo(-19 + skirtSway * 0.5, -40, -14, -52);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Satin ribbon sash & bow at waist
+    // Fitted rose athletic shorts waist wrap
+    ctx.fillStyle = pink;
+    ctx.strokeStyle = ink; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.roundRect(-14, -54, 29, 15, 7); ctx.fill(); ctx.stroke();
     ctx.fillStyle = cream;
-    ctx.fillRect(-14, -54, 29, 5);
-    ctx.strokeStyle = 'rgba(255, 224, 242, 0.55)';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.moveTo(-6, -49); ctx.lineTo(-10 + skirtSway * 0.7, -28);
-    ctx.moveTo(4, -49); ctx.lineTo(6 + skirtSway * 0.7, -27);
-    ctx.stroke();
+    ctx.fillRect(-13, -54, 27, 4);
+
+    ctx.restore(); // torso
 
     // === FRONT LEG ===
-    ctx.restore();
-    this._drawSculptedFemLeg(ctx, 6 + hipSway * 0.3, -46, frontHipA, frontKneeA, furBase, cream, silkPink, ink);
+    this._drawLolaLeg(ctx, 6 + hipSway * 0.3, -48, frontHipA, frontKneeA, furBase, cream, pink, ink);
 
-    // === EXPRESSIVE FLIRTY CARAMEL BUNNY HEAD ===
+    // === CUTE LOLA-STYLE EXPRESSIVE BUNNY HEAD ===
     ctx.save();
-    ctx.translate(3 + hipSway * 0.4, -108 + (f.stunTimer > 0 ? 4 : 0));
-    ctx.rotate(f.stunTimer > 0 ? -0.22 : isAttacking ? 0.14 : Math.sin(t) * 0.055);
+    ctx.translate(3 + hipSway * 0.4, -112 + (f.stunTimer > 0 ? 4 : 0));
+    // During Pear Bounce she peeks cheekily back over her shoulder toward Husbun!
+    if (isPearBounce) ctx.scale(-1, 1);
+    ctx.rotate(f.stunTimer > 0 ? -0.22 : isAttacking ? 0.10 : Math.sin(t) * 0.055);
 
-    // Multi-segment graceful flowing bunny ears!
-    const earSway = Math.sin(this.time * 5.6) * 0.08 + f.earLag;
-    this._drawCapcomEar(ctx, -11, -18, -0.68 + earSway, 10, 40, furShade, '#ffa3d0', ink, true);
-    this._drawCapcomEar(ctx, 4, -21, -0.16 - earSway * 0.6, 10.5, 42, furBase, '#ffb8dc', ink, false);
+    // Iconic Lola-style long silky ears swept back through a pink scrunchie!
+    const earSway = Math.sin(this.time * 5.8) * 0.09 + f.earLag;
+    this._drawLolaPonytailEars(ctx, -12, -16, earSway, furBase, furShade, '#ffb8dc', pink, ink);
 
-    // Satin rose bow on front ear
-    ctx.save();
-    ctx.translate(8, -32);
-    ctx.fillStyle = '#ff3e9d';
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 1.8;
-    ctx.beginPath(); ctx.ellipse(-9, 0, 9, 5.2, -0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.ellipse(9, 0, 9, 5.2, 0.32, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#ffe3f1';
-    ctx.beginPath(); ctx.arc(0, 0, 4.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.restore();
-
-    // Sculpted cel-shaded bunny head with warm moonlight rim highlight!
-    const headGrad = ctx.createRadialGradient(-5, -8, 4, 0, 0, 28);
+    // Sculpted caramel cartoon bunny head with cute cheek fluff
+    const headGrad = ctx.createRadialGradient(-4, -8, 4, 0, 0, 28);
     headGrad.addColorStop(0, furHi);
     headGrad.addColorStop(0.62, furBase);
     headGrad.addColorStop(1, furShade);
@@ -1920,63 +1840,63 @@ export class GameEngine {
     ctx.strokeStyle = ink;
     ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.ellipse(0, 0, 24.5, 22, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 23, 21.5, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
-    // Silky bangs tuft
+    // Swept cute Lola bangs!
     ctx.fillStyle = furHi;
     ctx.beginPath();
-    ctx.moveTo(-6, -18);
-    ctx.quadraticCurveTo(6, -24, 16, -14);
-    ctx.quadraticCurveTo(6, -13, -6, -18);
+    ctx.moveTo(-10, -16);
+    ctx.quadraticCurveTo(4, -27, 19, -12);
+    ctx.quadraticCurveTo(6, -15, -4, -10);
+    ctx.closePath();
     ctx.fill();
+    ctx.stroke();
 
     // DJ Headphones on DJ Spin!
     if (f.move && f.move.id === 'dj_spin') {
-      ctx.strokeStyle = '#ff69b4';
-      ctx.lineWidth = 4.5;
-      ctx.beginPath(); ctx.arc(0, -3, 28, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+      ctx.strokeStyle = '#ff69b4'; ctx.lineWidth = 4.5;
+      ctx.beginPath(); ctx.arc(0, -3, 27, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
       ctx.fillStyle = '#38bdf8';
-      ctx.beginPath(); ctx.roundRect(-30, -9, 8.5, 18, 4); ctx.roundRect(21.5, -9, 8.5, 18, 4); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(-29, -9, 8.5, 18, 4); ctx.roundRect(20.5, -9, 8.5, 18, 4); ctx.fill();
     }
 
-    // Muzzle & tiny pink nose
+    // Cute cream bunny muzzle (dramatically puffs up during Coke Burp!)
+    const puff = 1 + (f.cheekPuff || 0) * 0.65;
     ctx.fillStyle = cream;
-    ctx.beginPath(); ctx.ellipse(12, 7.5, 10.5, 7.5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#ff5ca8';
-    ctx.beginPath(); ctx.arc(15.5, 4.2, 3.2, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = ink; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.ellipse(13, 7, 10.5 * puff, 7.5 * puff, 0, 0, Math.PI * 2); ctx.fill();
+    if (f.cheekPuff > 0.1) ctx.stroke();
 
-    // Warm rosy blush cheeks (bright glow when Forehead Kissed!)
-    ctx.fillStyle = f.blushTimer > 0 ? 'rgba(255, 50, 128, 0.85)' : 'rgba(255, 118, 178, 0.56)';
+    // Tiny cute pink triangular bunny nose
+    ctx.fillStyle = '#ff4d9e';
     ctx.beginPath();
-    ctx.ellipse(2, 7.5, f.blushTimer > 0 ? 8.5 : 6.2, f.blushTimer > 0 ? 5 : 3.5, 0, 0, Math.PI * 2);
+    ctx.moveTo(15, 2.5); ctx.lineTo(20, 4.5); ctx.lineTo(15.5, 6.5); ctx.closePath();
     ctx.fill();
 
-    // Expressive glossy lips / smile / kissy pout!
-    ctx.strokeStyle = '#4d1e2b';
-    ctx.lineWidth = 1.9;
+    // Rosy blush cheeks
+    ctx.fillStyle = f.blushTimer > 0 ? 'rgba(255, 48, 128, 0.88)' : 'rgba(255, 118, 178, 0.56)';
+    ctx.beginPath(); ctx.ellipse(2, 7.5, f.blushTimer > 0 ? 9 : 6, f.blushTimer > 0 ? 5 : 3.5, 0, 0, Math.PI * 2); ctx.fill();
+
+    // Sassy expressive mouth / kissy pout
+    ctx.strokeStyle = '#4d1e2b'; ctx.lineWidth = 1.9;
     if (f.move && f.move.id === 'coke_burp' && f.move.phase === 'active') {
       ctx.fillStyle = '#632814';
-      ctx.beginPath(); ctx.arc(15, 10.5, 5.2, 0, Math.PI * 2); ctx.fill();
-    } else if (f.winkTimer > 0 || f.heartEyesTimer > 0) {
-      // Flirty rosy kiss-pout!
-      ctx.fillStyle = '#ff5ca8';
-      ctx.beginPath(); ctx.arc(14.5, 10, 3.3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(16, 10, 5.5, 0, Math.PI * 2); ctx.fill();
+    } else if (f.winkTimer > 0 || f.heartEyesTimer > 0 || isPearBounce) {
+      ctx.fillStyle = '#ff4d9e';
+      ctx.beginPath(); ctx.arc(15, 10, 3.5, 0, Math.PI * 2); ctx.fill();
     } else if (f.koState) {
       ctx.beginPath(); ctx.arc(13, 11, 3.2, 0, Math.PI * 2); ctx.stroke();
     } else {
-      ctx.beginPath();
-      ctx.moveTo(9.5, 9.5);
-      ctx.quadraticCurveTo(14.5, 13, 19, 9);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(9, 9.5); ctx.quadraticCurveTo(14.5, 13.5, 19.5, 8.8); ctx.stroke();
     }
 
-    // Allure / Flirty Eyes (Wink, Heart Eyes, Half-Lidded Sultry Sparkle!)
+    // Big Expressive Lola-Style Almond Cartoon Eyes!
     const isBlinking = !f.koState && (this.time % 3.6) > 3.46;
     if (f.koState) {
-      ctx.strokeStyle = '#ffd479';
-      ctx.lineWidth = 2.6;
+      ctx.strokeStyle = '#ffd479'; ctx.lineWidth = 2.6;
       [5, 16].forEach((ex) => {
         ctx.beginPath(); ctx.moveTo(ex - 3, -6); ctx.lineTo(ex + 3, 0); ctx.moveTo(ex + 3, -6); ctx.lineTo(ex - 3, 0); ctx.stroke();
       });
@@ -1985,38 +1905,35 @@ export class GameEngine {
         this._drawHeart(ctx, Math.cos(a) * 24, -30 + Math.sin(a) * 6, 6, '#ff77ba');
       }
     } else if (f.heartEyesTimer > 0 || f.counterWindow > 0) {
-      [5, 16].forEach((ex) => this._drawHeart(ctx, ex, -3, 6.4, '#ff4d9e'));
+      [5, 16].forEach((ex) => this._drawHeart(ctx, ex, -3, 6.6, '#ff4d9e'));
     } else {
       [5, 16].forEach((ex, idx) => {
-        const winkThisEye = f.winkTimer > 0 && idx === 1;
+        const winkThisEye = (f.winkTimer > 0 || isPearBounce) && idx === 1;
         if (isBlinking || winkThisEye) {
-          ctx.strokeStyle = ink;
-          ctx.lineWidth = 2.4;
-          ctx.beginPath(); ctx.arc(ex, -2, 4.2, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
-          // Curved wink lash
-          ctx.beginPath(); ctx.moveTo(ex - 4, -2); ctx.lineTo(ex - 7.5, -5); ctx.stroke();
+          ctx.strokeStyle = ink; ctx.lineWidth = 2.4;
+          ctx.beginPath(); ctx.arc(ex, -2, 4.4, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(ex - 4, -2); ctx.lineTo(ex - 8, -5.5); ctx.stroke();
         } else {
-          const rx = idx === 0 ? 5.2 : 4.4;
-          const ry = 5.4;
-          // White sclera + deep glossy brown/amber iris
+          const rx = idx === 0 ? 5.6 : 4.6;
+          const ry = 6.2;
           ctx.fillStyle = '#ffffff';
-          ctx.beginPath(); ctx.ellipse(ex, -3, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = '#3b1814';
-          ctx.beginPath(); ctx.ellipse(ex + 0.8, -2.6, rx * 0.72, ry * 0.78, 0, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = '#ff99cc';
-          ctx.beginPath(); ctx.arc(ex + 0.6, -0.5, 1.5, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.ellipse(ex, -3.2, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+          // Warm sparkling violet-amber iris
+          ctx.fillStyle = '#5c2d91';
+          ctx.beginPath(); ctx.ellipse(ex + 1, -2.8, rx * 0.65, ry * 0.72, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#1f0d1a';
+          ctx.beginPath(); ctx.arc(ex + 1.2, -2.8, 2.2, 0, Math.PI * 2); ctx.fill();
           ctx.fillStyle = '#ffffff';
-          ctx.beginPath(); ctx.arc(ex + 1.8, -5.2, 2.0, 0, Math.PI * 2); ctx.fill();
-          // Sultry winged upper eyelid & curved lashes!
-          ctx.strokeStyle = ink;
-          ctx.lineWidth = 2.4;
+          ctx.beginPath(); ctx.arc(ex + 2.2, -5.5, 2.0, 0, Math.PI * 2); ctx.fill();
+          // Sultry rose-tinted upper eyelid + long winged lashes!
+          ctx.fillStyle = 'rgba(255, 130, 195, 0.55)';
+          ctx.beginPath(); ctx.arc(ex, -4.2, rx + 0.3, Math.PI, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = ink; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.arc(ex, -3.8, rx + 0.6, Math.PI * 1.02, Math.PI * 1.98); ctx.stroke();
+          ctx.lineWidth = 1.9;
           ctx.beginPath();
-          ctx.arc(ex, -3.5, rx + 0.6, Math.PI * 1.05, Math.PI * 1.95);
-          ctx.stroke();
-          ctx.lineWidth = 1.8;
-          ctx.beginPath();
-          ctx.moveTo(ex - rx, -4.5); ctx.lineTo(ex - rx - 4, -8);
-          ctx.moveTo(ex - 1, -8); ctx.lineTo(ex - 3.5, -11);
+          ctx.moveTo(ex - rx, -4.5); ctx.lineTo(ex - rx - 4.5, -8.5);
+          ctx.moveTo(ex - 1.5, -9); ctx.lineTo(ex - 4.5, -12.5);
           ctx.stroke();
         }
       });
@@ -2024,104 +1941,103 @@ export class GameEngine {
 
     ctx.restore(); // head
 
-    // === FRONT ARM (flirty beckon in idle, crisp strike extension on moves!) ===
-    const fShA = f.blocking ? -1.35 : isAttacking ? -0.22 : isWindup ? 1.1 : 0.28 + Math.sin(t) * 0.14;
-    const fElA = f.blocking ? -1.05 : isAttacking ? 0.05 : isWindup ? -0.9 : -0.85 - Math.sin(t) * 0.18;
-    this._drawSculptedFemArm(ctx, -4 + hipSway * 0.3, -82, fShA, fElA, furBase, silkPink, ink, isAttacking);
+    // === FRONT ARM (sassy hand-on-hip during Pear Bounce, flirty beckon in idle!) ===
+    const fShA = f.blocking ? -1.35 : isPearBounce ? 0.55 : isAttacking ? -0.22 : 0.28 + Math.sin(t) * 0.14;
+    const fElA = f.blocking ? -1.05 : isPearBounce ? 1.1 : isAttacking ? 0.05 : -0.85 - Math.sin(t) * 0.18;
+    this._drawLolaArm(ctx, -4 + hipSway * 0.3, -86, fShA, fElA, furBase, pink, ink, isAttacking && !isPearBounce);
 
-    // Guard Rose-Gold Shield
     if (f.blocking) {
       ctx.strokeStyle = 'rgba(255, 212, 121, 0.92)';
       ctx.fillStyle = 'rgba(255, 212, 121, 0.16)';
       ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      ctx.arc(30, -70, 38, -Math.PI * 0.45, Math.PI * 0.45);
-      ctx.stroke();
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(30, -72, 38, -Math.PI * 0.45, Math.PI * 0.45); ctx.stroke(); ctx.fill();
     }
 
     ctx.restore();
   }
 
-  _drawSculptedFemLeg(ctx, x, y, hipA, kneeA, furCol, stockingCol, bootCol, ink) {
+  _drawLolaPonytailEars(ctx, x, y, sway, furCol, furShade, innerCol, bandCol, ink) {
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(hipA);
-    // Sculpted thigh (caramel fur + cream thigh-high stocking with rose garter!)
-    ctx.fillStyle = furCol;
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(-6.5, -2, 13, 24, 6);
-    ctx.fill();
-    ctx.stroke();
+    // Two long silky bunny ears swept back & held together by a cute pink scrunchie!
+    [
+      { a: -0.95 + sway, col: furShade, len: 48 },
+      { a: -0.62 + sway * 0.7, col: furCol, len: 52 },
+    ].forEach((e) => {
+      ctx.save();
+      ctx.rotate(e.a);
+      ctx.fillStyle = e.col; ctx.strokeStyle = ink; ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(-5, 0);
+      ctx.bezierCurveTo(-13, -e.len * 0.45, -14, -e.len * 0.9, 0, -e.len);
+      ctx.bezierCurveTo(13, -e.len * 0.85, 11, -e.len * 0.4, 5, 0);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = innerCol;
+      ctx.beginPath(); ctx.ellipse(0, -e.len * 0.56, 4.8, e.len * 0.32, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    });
 
-    // Knee joint -> Calf (cream stocking + chic rose fighter boot!)
-    ctx.translate(0, 21);
-    ctx.rotate(kneeA);
-    ctx.fillStyle = stockingCol;
-    ctx.beginPath();
-    ctx.roundRect(-5, -2, 10, 23, 5);
-    ctx.fill();
-    ctx.stroke();
-    // Cute pink garter ribbon band at top of stocking
-    ctx.fillStyle = bootCol;
-    ctx.fillRect(-5.5, -3, 11, 4);
-
-    // Chic heeled fighter boot
-    ctx.fillStyle = bootCol;
-    ctx.beginPath();
-    ctx.moveTo(-5, 14);
-    ctx.lineTo(5, 14);
-    ctx.lineTo(13, 24);
-    ctx.lineTo(-6, 24);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    // Cute puffy pink hair-tie scrunchie holding both ears!
+    ctx.fillStyle = bandCol; ctx.strokeStyle = ink; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(-7, -9, 9.5, 5.5, -0.75, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#ffe3f1';
+    ctx.beginPath(); ctx.arc(-7, -9, 3, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 
-  _drawSculptedFemArm(ctx, x, y, shA, elA, furCol, gloveCol, ink, extended = false) {
+  _drawLolaLeg(ctx, x, y, hipA, kneeA, furCol, sockCol, shoeCol, ink) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(hipA);
+    ctx.fillStyle = furCol; ctx.strokeStyle = ink; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(-6.5, -2, 13, 25, 6.5); ctx.fill(); ctx.stroke();
+
+    ctx.translate(0, 22);
+    ctx.rotate(kneeA);
+    ctx.fillStyle = sockCol;
+    ctx.beginPath(); ctx.roundRect(-5, -2, 10, 24, 5); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = shoeCol; ctx.fillRect(-5.5, -2, 11, 3.8);
+
+    // Sleek retro pink fighter sneaker
+    ctx.fillStyle = shoeCol;
+    ctx.beginPath();
+    ctx.roundRect(-6, 16, 20, 11, 5);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-6, 24, 20, 3.5);
+    ctx.restore();
+  }
+
+  _drawLolaArm(ctx, x, y, shA, elA, furCol, gloveCol, ink, extended = false) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(shA);
-    ctx.fillStyle = furCol;
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(-4, -4.5, 22, 9, 4.5);
-    ctx.fill();
-    ctx.stroke();
+    ctx.fillStyle = furCol; ctx.strokeStyle = ink; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(-4, -4.5, 22, 9, 4.5); ctx.fill(); ctx.stroke();
 
     ctx.translate(18, 0);
     ctx.rotate(elA);
     const fLen = extended ? 24 : 18;
-    ctx.beginPath();
-    ctx.roundRect(-3, -4, fLen, 8, 4);
-    ctx.fill();
-    ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(-3, -4, fLen, 8, 4); ctx.fill(); ctx.stroke();
 
-    // Fingerless satin pink glove & cuff
     ctx.fillStyle = gloveCol;
-    ctx.beginPath();
-    ctx.arc(fLen + 2, 0, extended ? 9.5 : 7.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    ctx.beginPath(); ctx.arc(fLen + 2, 0, extended ? 9.5 : 7.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.restore();
   }
 
   // ==========================================================
-  // CAPCOM / STREET FIGHTER CEL-SHADED RIG 2: HUSBUN
-  // Tall, suave, sculpted muscular espresso-brown bunny fighter!
+  // CHARACTER 2: HUSBUN — Tall, Charming, Bugs-Bunny-Inspired Masculine Brown Bunny!
   // ==========================================================
-  _drawHusbunCapcom(ctx, f) {
+  _drawHusbunBugsStyle(ctx, f) {
     const dir = f.facing;
-    const furBase = '#6b4125';
+    const furBase = '#6d4326';
     const furHi = '#96623d';
-    const furShade = '#422411';
+    const furShade = '#452612';
+    const cream = '#f5e4d0';
     const ink = '#1e0e14';
-    const vestMain = '#1b3464';
-    const vestShade = '#102042';
+    const vestMain = '#1d3b75';
+    const vestShade = '#102145';
     const gold = '#ffd479';
 
     const t = this.time * 5.0 + 1.4;
@@ -2137,35 +2053,30 @@ export class GameEngine {
 
     const isAttacking = Boolean(f.move && f.move.phase === 'active');
     const isWindup = Boolean(f.move && f.move.phase === 'windup');
+    const isKissing = Boolean(f.move && f.move.id === 'forehead_kiss' && f.move.phase !== 'recover');
 
     ctx.save();
     ctx.translate(f.x, f.y);
 
     const airScale = Math.max(0.45, 1 - (GROUND_Y - f.y) / 360);
     ctx.fillStyle = 'rgba(18, 4, 22, 0.44)';
-    ctx.beginPath();
-    ctx.ellipse(0, GROUND_Y - f.y + 4, 44 * airScale, 10.5 * airScale, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, GROUND_Y - f.y + 4, 44 * airScale, 10.5 * airScale, 0, 0, Math.PI * 2); ctx.fill();
 
     if (f.dodgeTimer > 0) ctx.globalAlpha = 0.78;
 
     if ((f.counterWindow > 0 || f.superMeter >= MAX_SUPER) && !f.koState) {
       ctx.save();
-      ctx.strokeStyle = f.counterWindow > 0 ? 'rgba(255, 212, 121, 0.92)' : 'rgba(96, 165, 250, 0.70)';
+      ctx.strokeStyle = f.counterWindow > 0 ? 'rgba(255, 212, 121, 0.92)' : 'rgba(96, 165, 250, 0.72)';
       ctx.lineWidth = f.counterWindow > 0 ? 4.5 : 3;
       ctx.shadowColor = f.counterWindow > 0 ? '#ffd479' : '#60a5fa';
       ctx.shadowBlur = 20;
-      ctx.beginPath();
-      ctx.ellipse(0, -76, 56, 86, 0, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(0, -82, 56, 92, 0, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
     }
 
     ctx.translate(0, bounceY);
     if (f.rollAngle !== 0) {
-      ctx.translate(0, -62);
-      ctx.rotate(f.rollAngle);
-      ctx.translate(0, 62);
+      ctx.translate(0, -64); ctx.rotate(f.rollAngle); ctx.translate(0, 64);
     }
 
     ctx.scale(dir * f.squashX, f.squashY);
@@ -2175,288 +2086,246 @@ export class GameEngine {
       ctx.rotate(-0.48 * f.koFallProgress);
     }
 
-    // === 2-SEGMENT ATHLETIC MASCULINE LEGS ===
-    const backHipA = f.koState ? 0.85 : !f.grounded ? 0.45 : isMoving ? -stride * 0.65 : -0.32;
-    const backKneeA = f.koState ? 0.4 : !f.grounded ? 0.65 : isMoving ? Math.max(0, stride * 0.75) : 0.30;
-    const frontHipA = f.koState ? 1.05 : !f.grounded ? -0.32 : isMoving ? stride * 0.65 : 0.28;
-    const frontKneeA = f.koState ? 0.35 : !f.grounded ? 0.78 : isMoving ? Math.max(0, -stride * 0.75) : 0.16;
+    // === TALL BUGS-STYLE ATHLETIC LEGS (stretch even taller on Height Mog!) ===
+    const legStretch = f.stretchH * 0.45;
+    const hipY = -60 - legStretch;
+    const backHipA = f.koState ? 0.85 : !f.grounded ? 0.45 : isMoving ? -stride * 0.65 : -0.28;
+    const backKneeA = f.koState ? 0.4 : !f.grounded ? 0.65 : isMoving ? Math.max(0, stride * 0.75) : 0.26;
+    const frontHipA = f.koState ? 1.05 : !f.grounded ? -0.32 : isMoving ? stride * 0.65 : 0.24;
+    const frontKneeA = f.koState ? 0.35 : !f.grounded ? 0.78 : isMoving ? Math.max(0, -stride * 0.75) : 0.14;
 
-    this._drawSculptedMascLeg(ctx, -9, -56, backHipA, backKneeA, '#142347', '#1d4ed8', ink);
+    this._drawBugsLeg(ctx, -8, hipY, backHipA, backKneeA, legStretch, furShade, '#1d4ed8', ink);
 
-    // Masculine cotton tail
-    ctx.fillStyle = '#e8d2bc';
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(-26, -58, 10, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // Classic fluffy Bugs cotton tail!
+    ctx.fillStyle = '#fff5eb'; ctx.strokeStyle = ink; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(-25, hipY - 2, 12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
-    // === BACK MUSCULAR ARM ===
-    const torsoH = 56 + f.stretchH;
-    const torsoTop = -56 - torsoH;
-
+    // === BACK ARM ===
+    const torsoH = 58 + f.stretchH * 0.55;
+    const torsoTop = hipY - torsoH;
     const backShA = f.blocking ? -1.15 : isAttacking ? -0.85 : isWindup ? 0.75 : -0.42 + Math.sin(t) * 0.12;
-    const backElA = f.blocking ? -1.15 : -0.95;
-    this._drawSculptedMascArm(ctx, 14, torsoTop + 14, backShA, backElA, furShade, '#dbeafe', ink);
+    this._drawBugsArm(ctx, 13, torsoTop + 14, backShA, -0.95, furShade, '#e2e8f0', ink);
 
-    // === BROAD SCULPTED V-TAPER MASCULINE TORSO & OPEN-COLLAR FIGHTING VEST ===
+    // === BROAD MASCULINE BUGS-STYLE TORSO WITH CREAM CHEST FUR & OPEN JACKET ===
     ctx.save();
-    ctx.rotate(isAttacking ? 0.15 : isWindup ? -0.14 : Math.sin(t) * 0.035);
+    ctx.rotate(isKissing ? 0.28 : isAttacking ? 0.15 : isWindup ? -0.14 : Math.sin(t) * 0.035);
 
-    // Sculpted brown chest fur visible in the open V-collar!
+    // Sculpted brown torso + iconic Bugs cream chest patch!
     ctx.fillStyle = f.hitFlash > 0 ? '#ffffff' : furBase;
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 2.4;
+    ctx.strokeStyle = ink; ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.moveTo(-25, torsoTop);
-    ctx.lineTo(27, torsoTop);
-    ctx.lineTo(19, -54);
-    ctx.lineTo(-19, -54);
+    ctx.moveTo(-24, torsoTop);
+    ctx.lineTo(26, torsoTop);
+    ctx.lineTo(18, hipY + 2);
+    ctx.lineTo(-18, hipY + 2);
     ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    ctx.fill(); ctx.stroke();
 
-    // Fitted midnight-navy velvet fighting vest panels + gold lapels
-    const vestGrad = ctx.createLinearGradient(-26, torsoTop, 26, -54);
-    vestGrad.addColorStop(0, '#2a4d8f');
+    // Classic Bugs cream front tummy/chest fur!
+    ctx.fillStyle = cream;
+    ctx.beginPath();
+    ctx.ellipse(4, torsoTop + torsoH * 0.50, 12, torsoH * 0.42, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Stylish open-front varsity/fighter vest with gold trim!
+    const vestGrad = ctx.createLinearGradient(-25, torsoTop, 25, hipY);
+    vestGrad.addColorStop(0, '#2b5299');
     vestGrad.addColorStop(0.5, vestMain);
     vestGrad.addColorStop(1, vestShade);
     ctx.fillStyle = f.hitFlash > 0 ? '#ffffff' : vestGrad;
+    // Left jacket lapel
     ctx.beginPath();
-    ctx.moveTo(-26, torsoTop);
-    ctx.lineTo(-8, torsoTop);
-    ctx.lineTo(2, torsoTop + 26);
-    ctx.lineTo(13, torsoTop);
-    ctx.lineTo(27, torsoTop);
-    ctx.lineTo(20, -52);
-    ctx.lineTo(-20, -52);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    ctx.moveTo(-25, torsoTop); ctx.lineTo(-5, torsoTop); ctx.lineTo(-4, hipY); ctx.lineTo(-19, hipY); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    // Right jacket lapel
+    ctx.beginPath();
+    ctx.moveTo(11, torsoTop); ctx.lineTo(26, torsoTop); ctx.lineTo(19, hipY); ctx.lineTo(10, hipY); ctx.closePath();
+    ctx.fill(); ctx.stroke();
 
-    // Gold collar lapel trim & belt buckle
-    ctx.strokeStyle = gold;
-    ctx.lineWidth = 2.6;
-    ctx.beginPath();
-    ctx.moveTo(-8, torsoTop); ctx.lineTo(2, torsoTop + 26); ctx.lineTo(13, torsoTop);
-    ctx.stroke();
+    // Athletic navy shorts with gold waistband
+    ctx.fillStyle = '#14244a';
+    ctx.beginPath(); ctx.roundRect(-20, hipY - 6, 40, 22, 6); ctx.fill(); ctx.stroke();
     ctx.fillStyle = gold;
-    ctx.fillRect(-20, -58, 40, 6);
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 1.8;
-    ctx.strokeRect(-7, -59, 14, 8);
+    ctx.fillRect(-19, hipY - 6, 38, 5);
 
     ctx.restore();
 
     // === FRONT LEG ===
-    this._drawSculptedMascLeg(ctx, 9, -56, frontHipA, frontKneeA, '#1e3566', '#2563eb', ink);
+    this._drawBugsLeg(ctx, 8, hipY, frontHipA, frontKneeA, legStretch, furBase, '#2563eb', ink);
 
-    // === SUAVE MASCULINE ESPRESSO BUNNY HEAD ===
+    // === ICONIC BUGS-BUNNY-STYLE CHARMING MASCULINE HEAD ===
     ctx.save();
-    ctx.translate(4, torsoTop - 24 + (f.stunTimer > 0 ? 4 : 0));
-    ctx.rotate(f.stunTimer > 0 ? -0.20 : isAttacking ? 0.14 : Math.sin(t) * 0.04);
+    ctx.translate(4, torsoTop - 25 + (f.stunTimer > 0 ? 4 : 0));
+    ctx.rotate(isKissing ? 0.24 : f.stunTimer > 0 ? -0.20 : isAttacking ? 0.14 : Math.sin(t) * 0.04);
 
-    // Tall upright rugged masculine bunny ears
-    const earSway = Math.sin(this.time * 5.0 + 1.2) * 0.05 + f.earLag;
-    this._drawCapcomEar(ctx, -10, -22, -0.18 + earSway, 10, 44, furShade, '#b88569', ink, false);
-    this._drawCapcomEar(ctx, 7, -23, 0.10 - earSway * 0.6, 10, 42, furBase, '#c99679', ink, true);
+    // Tall iconic upright Bugs-style long bunny ears!
+    const earSway = Math.sin(this.time * 5.0 + 1.2) * 0.06 + f.earLag;
+    this._drawBugsEar(ctx, -9, -22, -0.22 + earSway, 10, 56, furShade, '#d49e81', ink, false);
+    this._drawBugsEar(ctx, 7, -23, 0.12 - earSway * 0.6, 10, 54, furBase, '#e0ac8e', ink, true);
 
-    // Structured walnut-brown head with defined jawline
+    // Iconic fluffy Bugs cheek-tuft head shape!
     const headGrad = ctx.createRadialGradient(-4, -8, 4, 0, 0, 30);
     headGrad.addColorStop(0, furHi);
     headGrad.addColorStop(0.65, furBase);
     headGrad.addColorStop(1, furShade);
     ctx.fillStyle = f.hitFlash > 0 ? '#ffffff' : headGrad;
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = ink; ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.roundRect(-24, -24, 48, 46, 17);
-    ctx.fill();
-    ctx.stroke();
+    ctx.ellipse(0, -2, 22, 24, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
 
-    // Flowing navy & gold headband + dynamic ribbon tails!
+    // Classic Bugs fluffy side cheek tufts!
+    ctx.fillStyle = cream;
+    ctx.beginPath();
+    ctx.moveTo(-18, 4); ctx.quadraticCurveTo(-28, 8, -19, 14);
+    ctx.quadraticCurveTo(-8, 22, 14, 18);
+    ctx.quadraticCurveTo(26, 14, 24, 4);
+    ctx.quadraticCurveTo(16, -2, 4, 2);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Cool navy/gold headband
     ctx.fillStyle = '#2563eb';
-    ctx.beginPath(); ctx.roundRect(-25, -18, 50, 9, 3); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = gold;
-    ctx.fillRect(-24, -15, 48, 2.8);
-    ctx.strokeStyle = '#2563eb';
-    ctx.lineWidth = 5;
-    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.roundRect(-22, -20, 44, 7.5, 3); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = gold; ctx.fillRect(-21, -17.5, 42, 2.2);
+    ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 4.5; ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(-24, -14);
-    ctx.quadraticCurveTo(-36, -12 + Math.sin(this.time * 10) * 5, -46, -4 + Math.cos(this.time * 10) * 4);
+    ctx.moveTo(-22, -16);
+    ctx.quadraticCurveTo(-34, -14 + Math.sin(this.time * 10) * 5, -44, -6 + Math.cos(this.time * 10) * 4);
     ctx.stroke();
 
-    // Anime glasses glint on EYP Report!
+    // Shiny anime glasses on EYP Report!
     if (f.move && f.move.id === 'eyp_report') {
-      ctx.strokeStyle = gold;
-      ctx.lineWidth = 2.6;
-      ctx.beginPath(); ctx.roundRect(2, -9, 21, 11, 3); ctx.stroke();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.strokeStyle = gold; ctx.lineWidth = 2.6;
+      ctx.beginPath(); ctx.roundRect(1, -12, 22, 12, 3); ctx.fill(); ctx.stroke();
     }
 
-    // Muzzle & dark cocoa nose
-    ctx.fillStyle = '#e8cfb6';
-    ctx.beginPath(); ctx.ellipse(13, 8, 11.5, 8, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#3b2012';
-    ctx.beginPath(); ctx.ellipse(17.5, 5, 4, 2.8, 0, 0, Math.PI * 2); ctx.fill();
+    // Classic cute bunny nose & charming Bugs buck-tooth grin!
+    ctx.fillStyle = '#c95c78';
+    ctx.beginPath(); ctx.ellipse(19, 3, 4.4, 3.2, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
-    // Suave confident half-smirk (or kissy lips on Forehead Kiss!)
-    ctx.strokeStyle = '#2e160a';
-    ctx.lineWidth = 2.2;
-    if (f.move && f.move.id === 'forehead_kiss') {
+    if (isKissing) {
+      // Oversized romantic puckered kiss lips!
       ctx.fillStyle = '#ff4d9e';
-      ctx.beginPath(); ctx.arc(17.5, 11, 3.8, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(22, 11, 5.5, 4.2, 0, 0, Math.PI * 2); ctx.fill();
     } else if (f.koState) {
+      ctx.strokeStyle = ink; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(14, 12, 3.5, 0, Math.PI * 2); ctx.stroke();
     } else {
-      ctx.beginPath();
-      ctx.moveTo(9, 10.5);
-      ctx.quadraticCurveTo(15.5, 13.5, 21, 8.5);
-      ctx.stroke();
+      // Charming confident Bugs grin + subtle cute buck tooth!
+      ctx.strokeStyle = ink; ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.moveTo(6, 10); ctx.quadraticCurveTo(15, 16, 22, 9); ctx.stroke();
+      ctx.fillStyle = '#ffffff'; ctx.strokeStyle = ink; ctx.lineWidth = 1.4;
+      ctx.fillRect(14, 12, 4.5, 4.5); ctx.strokeRect(14, 12, 4.5, 4.5);
     }
 
-    // Smoldering confident eyes + strong masculine brows!
+    // Tall Expressive Bugs-Style Oval Cartoon Eyes + Confident Masculine Brows!
     const isBlinking = !f.koState && ((this.time + 1.8) % 3.8) > 3.66;
     if (f.koState) {
-      ctx.strokeStyle = gold;
-      ctx.lineWidth = 2.6;
-      [6, 17].forEach((ex) => {
-        ctx.beginPath(); ctx.moveTo(ex - 3, -6); ctx.lineTo(ex + 3, 0); ctx.moveTo(ex + 3, -6); ctx.lineTo(ex - 3, 0); ctx.stroke();
+      ctx.strokeStyle = gold; ctx.lineWidth = 2.6;
+      [6, 16].forEach((ex) => {
+        ctx.beginPath(); ctx.moveTo(ex - 3, -8); ctx.lineTo(ex + 3, -2); ctx.moveTo(ex + 3, -8); ctx.lineTo(ex - 3, -2); ctx.stroke();
       });
       for (let i = 0; i < 3; i++) {
         const a = this.time * 5 + (i * Math.PI * 2) / 3;
-        this._drawHeart(ctx, Math.cos(a) * 24, -32 + Math.sin(a) * 6, 6, '#60a5fa');
+        this._drawHeart(ctx, Math.cos(a) * 24, -34 + Math.sin(a) * 6, 6, '#60a5fa');
       }
     } else if (f.heartEyesTimer > 0 || f.counterWindow > 0) {
-      [6, 17].forEach((ex) => this._drawHeart(ctx, ex, -3, 6, '#ff69b4'));
+      [6, 16].forEach((ex) => this._drawHeart(ctx, ex, -5, 6.4, '#ff69b4'));
     } else if (isBlinking) {
-      ctx.strokeStyle = ink;
-      ctx.lineWidth = 2.4;
-      [6, 17].forEach((ex) => { ctx.beginPath(); ctx.moveTo(ex - 4, -3); ctx.lineTo(ex + 4, -3); ctx.stroke(); });
+      ctx.strokeStyle = ink; ctx.lineWidth = 2.4;
+      [6, 16].forEach((ex) => { ctx.beginPath(); ctx.moveTo(ex - 4, -5); ctx.lineTo(ex + 4, -5); ctx.stroke(); });
     } else {
-      [6, 17].forEach((ex, idx) => {
+      [6, 16].forEach((ex, idx) => {
+        // Tall iconic Bugs oval white eyes!
+        const rx = idx === 0 ? 4.8 : 4.2;
+        const ry = 7.2;
+        ctx.fillStyle = '#ffffff'; ctx.strokeStyle = ink; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.ellipse(ex, -6, rx, ry, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#1a0e07';
+        ctx.beginPath(); ctx.ellipse(ex + 1, -5.2, 2.5, 3.8, 0, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.ellipse(ex, -3, idx === 0 ? 4.6 : 4, 3.6, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#1f1008';
-        ctx.beginPath(); ctx.arc(ex + 0.8, -3, idx === 0 ? 3.2 : 2.8, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.arc(ex + 1.5, -4.3, 1.3, 0, Math.PI * 2); ctx.fill();
-        // Confident slanted brows
-        ctx.strokeStyle = '#241208';
-        ctx.lineWidth = 3.2;
-        ctx.beginPath(); ctx.moveTo(ex - 5.5, -8.5); ctx.lineTo(ex + 5.5, -6.5); ctx.stroke();
+        ctx.beginPath(); ctx.arc(ex + 1.7, -7.2, 1.3, 0, Math.PI * 2); ctx.fill();
+        // Confident suave half-lidded brow!
+        ctx.strokeStyle = '#241208'; ctx.lineWidth = 3.2;
+        ctx.beginPath(); ctx.moveTo(ex - 5, -12.5); ctx.lineTo(ex + 5, -10.5); ctx.stroke();
       });
     }
 
     ctx.restore(); // head
 
-    // === FRONT MUSCULAR ARM (suave martial-arts beckon in idle!) ===
+    // === FRONT ARM (classic crisp white Bugs gloves!) ===
     const fShA = f.blocking ? -1.35 : isAttacking ? -0.15 : isWindup ? 1.05 : 0.25 + Math.sin(t) * 0.10;
     const fElA = f.blocking ? -1.1 : isAttacking ? 0.05 : isWindup ? -0.9 : -1.05 + Math.sin(t * 2) * 0.16;
-    this._drawSculptedMascArm(ctx, -6, torsoTop + 14, fShA, fElA, furBase, '#f8fafc', ink, isAttacking);
+    this._drawBugsArm(ctx, -6, torsoTop + 14, fShA, fElA, furBase, '#ffffff', ink, isAttacking);
 
     if (f.blocking) {
       ctx.strokeStyle = 'rgba(255, 212, 121, 0.92)';
       ctx.fillStyle = 'rgba(255, 212, 121, 0.16)';
       ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      ctx.arc(34, -84, 42, -Math.PI * 0.45, Math.PI * 0.45);
-      ctx.stroke();
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(34, hipY - 30, 44, -Math.PI * 0.45, Math.PI * 0.45); ctx.stroke(); ctx.fill();
     }
 
     ctx.restore();
   }
 
-  _drawSculptedMascLeg(ctx, x, y, hipA, kneeA, pantCol, shoeCol, ink) {
+  _drawBugsEar(ctx, x, y, angle, rx, ry, outerCol, innerCol, ink, bendTip) {
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(hipA);
-    ctx.fillStyle = pantCol;
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 2.2;
+    ctx.rotate(angle);
+    ctx.fillStyle = outerCol; ctx.strokeStyle = ink; ctx.lineWidth = 2.2;
     ctx.beginPath();
-    ctx.roundRect(-8, -2, 16, 30, 6);
-    ctx.fill();
-    ctx.stroke();
-    // Gold athletic side stripe
-    ctx.fillStyle = '#ffd479';
-    ctx.fillRect(-1.5, 2, 3, 24);
-
-    ctx.translate(0, 26);
-    ctx.rotate(kneeA);
-    ctx.fillStyle = pantCol;
-    ctx.beginPath();
-    ctx.roundRect(-7, -2, 14, 26, 5);
-    ctx.fill();
-    ctx.stroke();
-
-    // High-top athletic fighter sneaker
-    ctx.fillStyle = shoeCol;
-    ctx.beginPath();
-    ctx.roundRect(-8, 20, 24, 13, 5);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(-8, 29, 24, 4);
+    ctx.moveTo(-6, 0);
+    ctx.bezierCurveTo(-13, -ry * 0.45, -11, -ry * 0.92, 0, -ry);
+    ctx.bezierCurveTo(11, -ry * 0.92, 12, -ry * 0.45, 6, 0);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = innerCol;
+    ctx.beginPath(); ctx.ellipse(0, -ry * 0.52, rx * 0.46, ry * 0.34, 0, 0, Math.PI * 2); ctx.fill();
+    if (bendTip) {
+      ctx.fillStyle = outerCol;
+      ctx.beginPath(); ctx.ellipse(rx * 0.55, -ry * 0.94, rx * 0.72, rx * 0.52, 0.45, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    }
     ctx.restore();
   }
 
-  _drawSculptedMascArm(ctx, x, y, shA, elA, furCol, wrapCol, ink, extended = false) {
+  _drawBugsLeg(ctx, x, y, hipA, kneeA, stretch, furCol, shoeCol, ink) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(hipA);
+    const thighLen = 30 + stretch * 0.5;
+    ctx.fillStyle = furCol; ctx.strokeStyle = ink; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.roundRect(-7, -2, 14, thighLen, 6); ctx.fill(); ctx.stroke();
+
+    ctx.translate(0, thighLen - 4);
+    ctx.rotate(kneeA);
+    const calfLen = 28 + stretch * 0.5;
+    ctx.beginPath(); ctx.roundRect(-6.5, -2, 13, calfLen, 5); ctx.fill(); ctx.stroke();
+
+    // Big classic athletic cartoon bunny foot/high-top sneaker!
+    ctx.fillStyle = shoeCol;
+    ctx.beginPath(); ctx.roundRect(-8, calfLen - 6, 26, 13, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-8, calfLen + 3, 26, 4);
+    ctx.restore();
+  }
+
+  _drawBugsArm(ctx, x, y, shA, elA, furCol, gloveCol, ink, extended = false) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(shA);
-    ctx.fillStyle = furCol;
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 2.2;
-    // Muscular bicep
-    ctx.beginPath();
-    ctx.roundRect(-5, -6.5, 26, 13, 6.5);
-    ctx.fill();
-    ctx.stroke();
+    ctx.fillStyle = furCol; ctx.strokeStyle = ink; ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.roundRect(-5, -6, 26, 12, 6); ctx.fill(); ctx.stroke();
 
     ctx.translate(21, 0);
     ctx.rotate(elA);
     const fLen = extended ? 28 : 22;
-    ctx.beginPath();
-    ctx.roundRect(-4, -5.5, fLen, 11, 5);
-    ctx.fill();
-    ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(-4, -5, fLen, 10, 5); ctx.fill(); ctx.stroke();
 
-    // Taped fighter hand-wraps
-    ctx.fillStyle = wrapCol;
-    ctx.beginPath();
-    ctx.arc(fLen + 3, 0, extended ? 11.5 : 9.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.strokeStyle = '#2563eb';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(fLen - 5, -5); ctx.lineTo(fLen - 5, 5); ctx.stroke();
-    ctx.restore();
-  }
-
-  _drawCapcomEar(ctx, x, y, angle, rx, ry, outerCol, innerCol, ink, softTip) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(angle);
-    ctx.fillStyle = outerCol;
-    ctx.strokeStyle = ink;
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.ellipse(0, -ry * 0.5, rx, ry * 0.56, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = innerCol;
-    ctx.beginPath();
-    ctx.ellipse(0, -ry * 0.48, rx * 0.50, ry * 0.38, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (softTip) {
-      ctx.fillStyle = outerCol;
-      ctx.beginPath();
-      ctx.ellipse(rx * 0.52, -ry * 0.92, rx * 0.78, rx * 0.55, 0.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-    }
+    // Classic crisp white cartoon bunny gloves!
+    ctx.fillStyle = gloveCol;
+    ctx.beginPath(); ctx.arc(fLen + 4, 0, extended ? 12 : 10, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.restore();
   }
 
@@ -2471,18 +2340,11 @@ export class GameEngine {
       ctx.scale(s.dir, 1);
       ctx.globalAlpha = alpha * 0.85;
       ctx.strokeStyle = s.color;
-      ctx.shadowColor = s.color;
-      ctx.shadowBlur = 14;
-      ctx.lineWidth = 14 * alpha;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.arc(0, 0, s.radius, -1.15, 0.95);
-      ctx.stroke();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 5 * alpha;
-      ctx.beginPath();
-      ctx.arc(0, 0, s.radius - 4, -0.95, 0.75);
-      ctx.stroke();
+      ctx.shadowColor = s.color; ctx.shadowBlur = 14;
+      ctx.lineWidth = 14 * alpha; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(0, 0, s.radius, -1.15, 0.95); ctx.stroke();
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 5 * alpha;
+      ctx.beginPath(); ctx.arc(0, 0, s.radius - 4, -0.95, 0.75); ctx.stroke();
       ctx.restore();
     }
   }
@@ -2492,24 +2354,18 @@ export class GameEngine {
       const alpha = Math.max(0, h.life / h.maxLife);
       const sc = 0.6 + (1 - alpha) * 0.8;
       ctx.save();
-      ctx.translate(h.x, h.y);
-      ctx.rotate(h.rot);
-      ctx.scale(sc, sc);
+      ctx.translate(h.x, h.y); ctx.rotate(h.rot); ctx.scale(sc, sc);
       ctx.globalAlpha = alpha;
-
-      // Capcom 4-point cross-star flash!
       const drawStar = (r, col) => {
         ctx.fillStyle = col;
         ctx.beginPath();
         for (let i = 0; i < 8; i++) {
           const rad = i % 2 === 0 ? r : r * 0.22;
           const a = (i * Math.PI) / 4;
-          const px = Math.cos(a) * rad;
-          const py = Math.sin(a) * rad;
+          const px = Math.cos(a) * rad, py = Math.sin(a) * rad;
           if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
         }
-        ctx.closePath();
-        ctx.fill();
+        ctx.closePath(); ctx.fill();
       };
       drawStar(h.size, h.color);
       drawStar(h.size * 0.58, '#ffffff');
@@ -2521,61 +2377,37 @@ export class GameEngine {
     for (const pr of this.projectiles) {
       ctx.save();
       ctx.translate(pr.x, pr.y);
-
-      if (pr.kind === 'pear') {
-        ctx.rotate(pr.rot);
-        ctx.shadowColor = '#bef264';
-        ctx.shadowBlur = 16;
-        ctx.fillStyle = '#bef264';
-        ctx.strokeStyle = '#4d7c0f';
-        ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(0, 8, 17, 0, Math.PI * 2); ctx.arc(0, -8, 11, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-        ctx.strokeStyle = '#713f12'; ctx.lineWidth = 3.5;
-        ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(3, -27); ctx.stroke();
-        ctx.fillStyle = '#22c55e';
-        ctx.beginPath(); ctx.ellipse(9, -22, 7.5, 3.8, -0.4, 0, Math.PI * 2); ctx.fill();
-      } else if (pr.kind === 'mango_seed') {
+      if (pr.kind === 'mango_seed') {
         const dir = Math.sign(pr.vx || 1);
-        const grad = ctx.createLinearGradient(-120 * dir, 0, 0, 0);
+        const grad = ctx.createLinearGradient(-130 * dir, 0, 0, 0);
         grad.addColorStop(0, 'rgba(255, 183, 3, 0)');
-        grad.addColorStop(1, 'rgba(255, 130, 0, 0.92)');
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 34;
-        ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.moveTo(-120 * dir, 0); ctx.lineTo(0, 0); ctx.stroke();
+        grad.addColorStop(1, 'rgba(255, 130, 0, 0.94)');
+        ctx.strokeStyle = grad; ctx.lineWidth = 36; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(-130 * dir, 0); ctx.lineTo(0, 0); ctx.stroke();
 
         ctx.rotate(pr.rot);
-        ctx.shadowColor = '#ffb703';
-        ctx.shadowBlur = 24;
-        ctx.fillStyle = '#ffd166';
-        ctx.strokeStyle = '#d97706';
-        ctx.lineWidth = 3.5;
-        ctx.beginPath(); ctx.ellipse(0, 0, 36, 20, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.shadowColor = '#ffb703'; ctx.shadowBlur = 24;
+        ctx.fillStyle = '#ffd166'; ctx.strokeStyle = '#d97706'; ctx.lineWidth = 3.5;
+        ctx.beginPath(); ctx.ellipse(0, 0, 38, 21, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
         ctx.strokeStyle = '#b45309'; ctx.lineWidth = 2.2;
-        ctx.beginPath(); ctx.moveTo(-22, -4); ctx.lineTo(22, -4); ctx.moveTo(-18, 4); ctx.lineTo(18, 4); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-24, -4); ctx.lineTo(24, -4); ctx.moveTo(-18, 4); ctx.lineTo(18, 4); ctx.stroke();
       } else if (pr.kind === 'eyp_report') {
-        ctx.rotate(pr.rot * 0.42);
-        ctx.shadowColor = '#60a5fa';
-        ctx.shadowBlur = 20;
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = '#1e3a8a';
-        ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.roundRect(-42, -52, 84, 104, 7); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = '#1d4ed8';
-        ctx.fillRect(-40, -50, 80, 22);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = `700 13px 'Chakra Petch', sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.fillText('EYP REPORT', 0, -35);
-        ctx.fillStyle = '#3b82f6'; ctx.fillRect(-26, 6, 12, 26);
-        ctx.fillStyle = '#ef4444'; ctx.fillRect(-6, -8, 12, 40);
-        ctx.fillStyle = '#10b981'; ctx.fillRect(14, 14, 12, 18);
+        // Colossal cartoon skyscraper stack of EYP Reports!
+        ctx.rotate(pr.rot * 0.38);
+        ctx.shadowColor = '#60a5fa'; ctx.shadowBlur = 22;
+        ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#1e3a8a'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.roundRect(-46, -58, 92, 116, 7); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#1d4ed8'; ctx.fillRect(-44, -56, 88, 24);
+        ctx.fillStyle = '#ffffff'; ctx.font = `700 14px 'Chakra Petch', sans-serif`; ctx.textAlign = 'center';
+        ctx.fillText('EYP REPORT', 0, -40);
+        ctx.fillStyle = '#3b82f6'; ctx.fillRect(-28, 6, 13, 28);
+        ctx.fillStyle = '#ef4444'; ctx.fillRect(-6, -10, 13, 44);
+        ctx.fillStyle = '#10b981'; ctx.fillRect(16, 14, 13, 20);
         ctx.rotate(-0.22);
-        ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 3;
-        ctx.strokeRect(-35, -6, 70, 20);
-        ctx.fillStyle = '#dc2626';
-        ctx.font = `700 12px 'Chakra Petch', sans-serif`;
-        ctx.fillText('APPROVED ♥', 0, 8);
+        ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 3.2;
+        ctx.strokeRect(-38, -6, 76, 22);
+        ctx.fillStyle = '#dc2626'; ctx.font = `700 13px 'Chakra Petch', sans-serif`;
+        ctx.fillText('APPROVED ♥', 0, 9);
       }
       ctx.restore();
     }
@@ -2590,69 +2422,77 @@ export class GameEngine {
       const dir = f ? f.facing : v.dir || 1;
 
       ctx.save();
-      if (v.kind === 'dj_spin') {
+      if (v.kind === 'pear_bounce') {
+        // Glowing comic impact rings & bouncing pear sparkles behind Wifebun's giant booty slam!
+        ctx.strokeStyle = `rgba(255, 119, 186, ${1 - p})`;
+        ctx.lineWidth = 8 * (1 - p) + 2;
+        ctx.beginPath();
+        ctx.arc(fx + 32 * dir, fy - 52, 24 + p * 75, dir > 0 ? -0.95 : Math.PI - 0.95, dir > 0 ? 0.95 : Math.PI + 0.95);
+        ctx.stroke();
+      } else if (v.kind === 'dj_spin') {
+        // Cartoon neon tornado funnel + spinning vinyl disc!
         ctx.translate(fx, fy - 62);
-        for (let r = 0; r < 2; r++) {
-          ctx.strokeStyle = r === 0 ? `rgba(255, 105, 180, ${1 - p})` : `rgba(56, 189, 248, ${1 - p})`;
-          ctx.lineWidth = 6 - r * 2;
-          ctx.beginPath(); ctx.arc(0, 0, 26 + p * (125 + r * 28), 0, Math.PI * 2); ctx.stroke();
+        for (let r = 0; r < 3; r++) {
+          ctx.strokeStyle = r % 2 === 0 ? `rgba(255, 105, 180, ${1 - p})` : `rgba(56, 189, 248, ${1 - p})`;
+          ctx.lineWidth = 6 - r * 1.4;
+          ctx.beginPath(); ctx.ellipse(0, (r - 1) * 24, 42 + p * (75 - r * 12), 14, 0, 0, Math.PI * 2); ctx.stroke();
         }
         ctx.rotate(p * Math.PI * 8);
-        ctx.fillStyle = '#111827';
-        ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#ff69b4';
-        ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#111827'; ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ff69b4'; ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
       } else if (v.kind === 'coke_burp') {
-        ctx.fillStyle = '#dc2626';
-        ctx.beginPath(); ctx.roundRect(fx + 18 * dir - 8, fy - 96, 16, 26, 4); ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(fx + 18 * dir - 8, fy - 86, 16, 5);
-        for (let i = 0; i < 4; i++) {
-          const wx = fx + (34 + p * 245 + i * 24) * dir;
+        // Oversized frosty red Coke can + roaring cartoon sonic beam!
+        ctx.fillStyle = '#dc2626'; ctx.strokeStyle = '#7f1d1d'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.roundRect(fx + 18 * dir - 10, fy - 102, 20, 32, 4); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(fx + 18 * dir - 9, fy - 90, 18, 6);
+        for (let i = 0; i < 5; i++) {
+          const wx = fx + (34 + p * 255 + i * 24) * dir;
           ctx.strokeStyle = i % 2 === 0 ? `rgba(139, 69, 19, ${1 - p})` : `rgba(255, 255, 255, ${1 - p})`;
-          ctx.lineWidth = 9 - i * 1.8;
-          ctx.beginPath(); ctx.arc(wx, fy - 96, 22 + p * 48, dir > 0 ? -0.9 : Math.PI - 0.9, dir > 0 ? 0.9 : Math.PI + 0.9); ctx.stroke();
+          ctx.lineWidth = 10 - i * 1.6;
+          ctx.beginPath(); ctx.arc(wx, fy - 96, 22 + p * 54, dir > 0 ? -0.95 : Math.PI - 0.95, dir > 0 ? 0.95 : Math.PI + 0.95); ctx.stroke();
         }
       } else if (v.kind === 'white_claw') {
+        // Oversized White Claw can + giant frosty triple claw slash!
         ctx.fillStyle = '#f8fafc'; ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.roundRect(fx + 16 * dir - 7, fy - 114, 14, 28, 3); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = '#0ea5e9'; ctx.fillRect(fx + 16 * dir - 6, fy - 104, 12, 8);
+        ctx.beginPath(); ctx.roundRect(fx + 18 * dir - 9, fy - 122, 18, 34, 4); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#0ea5e9'; ctx.fillRect(fx + 18 * dir - 8, fy - 110, 16, 10);
 
-        ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 16;
-        ctx.strokeStyle = `rgba(56, 189, 248, ${1 - p * 0.75})`;
-        ctx.lineWidth = 7; ctx.lineCap = 'round';
-        [-20, 0, 20].forEach((off) => {
+        ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 18;
+        ctx.strokeStyle = `rgba(56, 189, 248, ${1 - p * 0.72})`;
+        ctx.lineWidth = 8.5; ctx.lineCap = 'round';
+        [-22, 0, 22].forEach((off) => {
           ctx.beginPath();
-          ctx.moveTo(fx + 10 * dir, fy - 98 + off);
-          ctx.quadraticCurveTo(fx + 70 * dir, fy - 82 + off, fx + 135 * dir, fy - 62 + off);
+          ctx.moveTo(fx + 10 * dir, fy - 104 + off);
+          ctx.quadraticCurveTo(fx + 76 * dir, fy - 86 + off, fx + 148 * dir, fy - 62 + off);
           ctx.stroke();
         });
       } else if (v.kind === 'height_mog') {
-        const rx = fx - 58 * dir;
-        const rh = 255 * Math.min(1, p * 2.2);
+        // Giant towering golden 6'5" ruler!
+        const rx = fx - 60 * dir;
+        const rh = 290 * Math.min(1, p * 2.2);
         ctx.shadowColor = '#ffd479'; ctx.shadowBlur = 16;
         ctx.fillStyle = '#ffd479'; ctx.strokeStyle = '#854d0e'; ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.roundRect(rx, GROUND_Y - rh, 24, rh, 4); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.roundRect(rx, GROUND_Y - rh, 26, rh, 4); ctx.fill(); ctx.stroke();
         ctx.strokeStyle = '#422006'; ctx.lineWidth = 2;
         for (let ty = 14; ty < rh - 10; ty += 16) {
-          ctx.beginPath(); ctx.moveTo(rx, GROUND_Y - ty); ctx.lineTo(rx + (ty % 32 === 0 ? 13 : 8), GROUND_Y - ty); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(rx, GROUND_Y - ty); ctx.lineTo(rx + (ty % 32 === 0 ? 14 : 8), GROUND_Y - ty); ctx.stroke();
         }
-        ctx.font = `700 28px 'Bangers', Impact, sans-serif`;
+        ctx.font = `700 32px 'Bangers', Impact, sans-serif`;
         ctx.fillStyle = '#ffd479'; ctx.strokeStyle = '#18061a'; ctx.lineWidth = 5;
         ctx.strokeText(`6'5"`, rx - 4, GROUND_Y - rh - 10);
         ctx.fillText(`6'5"`, rx - 4, GROUND_Y - rh - 10);
       } else if (v.kind === 'forehead_kiss') {
         ctx.globalAlpha = 1 - p;
-        this._drawHeart(ctx, fx + 36 * dir, fy - 106, 18 + p * 12, '#ff69b4');
+        this._drawHeart(ctx, fx + 40 * dir, fy - 114, 20 + p * 14, '#ff69b4');
       } else if (v.kind === 'kiss_bloom') {
-        const sc = 0.7 + Math.sin(p * Math.PI) * 1.05;
-        ctx.translate(v.x, v.y - p * 32);
+        const sc = 0.8 + Math.sin(p * Math.PI) * 1.15;
+        ctx.translate(v.x, v.y - p * 34);
         ctx.scale(sc, sc);
-        ctx.globalAlpha = 1 - p * 0.65;
-        ctx.shadowColor = '#ff69b4'; ctx.shadowBlur = 24;
-        this._drawHeart(ctx, 0, 0, 30, '#ff4d9e');
-        ctx.font = `28px sans-serif`; ctx.textAlign = 'center';
-        ctx.fillText('💋', 0, 10);
+        ctx.globalAlpha = 1 - p * 0.6;
+        ctx.shadowColor = '#ff69b4'; ctx.shadowBlur = 26;
+        this._drawHeart(ctx, 0, 0, 34, '#ff4d9e');
+        ctx.font = `32px sans-serif`; ctx.textAlign = 'center';
+        ctx.fillText('💋', 0, 11);
       }
       ctx.restore();
     }
@@ -2663,11 +2503,11 @@ export class GameEngine {
       const alpha = Math.max(0, a.life / a.maxLife) * 0.48;
       ctx.save();
       ctx.globalAlpha = alpha;
-      ctx.translate(a.x, a.y - (a.isWifebun ? 60 : 72));
+      ctx.translate(a.x, a.y - (a.isWifebun ? 60 : 76));
       ctx.rotate(a.rollAngle || 0);
       ctx.fillStyle = a.color;
       ctx.beginPath();
-      ctx.ellipse(0, 0, a.isWifebun ? 22 : 28, a.isWifebun ? 52 : 62, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, a.isWifebun ? 24 : 28, a.isWifebun ? 52 : 66, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
