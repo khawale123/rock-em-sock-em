@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ROCK 'EM SOCK 'EM — 1v1 Arena</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- PeerJS for zero-config WebRTC 1v1 multiplayer -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
+  <!-- Google Identity Services (activated when a Google Client ID is configured) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <!-- Top Header -->
+    <header class="top-bar">
+      <div class="brand" id="brand-home" title="Back to Lobby">
+        <span class="brand-badge">1v1</span>
+        <span class="brand-title">ROCK 'EM <span class="accent-blue">SOCK 'EM</span></span>
+      </div>
+
+      <div class="top-controls">
+        <div id="user-pill" class="user-pill">
+          <div id="user-avatar" class="avatar">P1</div>
+          <div class="user-meta">
+            <span id="user-name" class="user-name">Player</span>
+            <span id="user-sub" class="user-sub">Guest</span>
+          </div>
+          <button id="btn-auth-modal" class="icon-btn" title="Google Sign-In & Profile">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+
+        <button id="btn-sound" class="icon-btn" title="Toggle Sound">
+          <svg id="icon-sound-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+          <svg id="icon-sound-off" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- LOBBY SCREEN -->
+    <main id="screen-lobby" class="screen active">
+      <div class="lobby-hero">
+        <div class="hero-tag">ARCADE TABLETOP DUEL</div>
+        <h1 class="hero-title">KNOCK THEIR <span class="text-red">BLOCK</span> <span class="text-blue">OFF!</span></h1>
+        <p class="hero-subtitle">Challenge a friend over Gmail or a room link for live 1-on-1 robot boxing, or warm up against the CPU.</p>
+      </div>
+
+      <div class="lobby-grid">
+        <!-- Primary Card: Online 1v1 -->
+        <section class="card card-primary">
+          <div class="card-header">
+            <span class="card-pill pill-red">ONLINE 1v1</span>
+            <h2>Play a Google Friend</h2>
+          </div>
+
+          <!-- Initial Online Actions -->
+          <div id="online-idle" class="online-panel">
+            <div class="rounds-row">
+              <label for="select-rounds">Match Format</label>
+              <div class="segmented" id="rounds-selector">
+                <button type="button" class="seg-btn" data-rounds="1">1 Round</button>
+                <button type="button" class="seg-btn active" data-rounds="3">Best of 3</button>
+                <button type="button" class="seg-btn" data-rounds="5">Best of 5</button>
+              </div>
+            </div>
+
+            <button id="btn-create-room" class="btn btn-red btn-lg btn-full">
+              <span class="btn-icon">🥊</span> Create 1v1 Match &amp; Invite
+            </button>
+
+            <div class="divider"><span>OR JOIN WITH CODE</span></div>
+
+            <form id="form-join-room" class="join-row">
+              <input id="input-room-code" type="text" maxlength="6" placeholder="ENTER CODE (e.g. K7M2P9)" autocomplete="off" />
+              <button type="submit" class="btn btn-blue">Join</button>
+            </form>
+          </div>
+
+          <!-- Hosting / Waiting for Opponent -->
+          <div id="online-waiting" class="online-panel hidden">
+            <div class="room-code-box">
+              <span class="room-label">SHARE THIS LINK TO JOIN YOUR MATCH</span>
+              <div class="share-link-row">
+                <input id="input-invite-link" type="text" readonly value="" aria-label="Match invite link" />
+                <button id="btn-copy-link" class="btn btn-blue btn-sm" type="button">Copy Link</button>
+              </div>
+              <div class="room-code-display">
+                <div>
+                  <span class="room-label">OR MATCH CODE</span>
+                  <strong id="display-room-code">------</strong>
+                </div>
+                <button id="btn-share-native" class="btn btn-outline btn-sm" type="button">Share Invite</button>
+              </div>
+              <div class="status-pulse">
+                <span class="dot"></span>
+                <span id="waiting-status">Waiting for opponent to join...</span>
+              </div>
+            </div>
+
+            <!-- Send Invite to Google User -->
+            <div class="invite-box">
+              <label for="input-friend-email">Invite a Google User via Gmail</label>
+              <div class="invite-row">
+                <input id="input-friend-email" type="email" placeholder="friend@gmail.com" autocomplete="email" />
+                <button id="btn-send-gmail" class="btn btn-gmail" type="button">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                  Gmail Invite
+                </button>
+              </div>
+              <p class="hint-text">Opens Gmail with a pre-filled 1-click match link. Works on any browser!</p>
+            </div>
+
+            <button id="btn-cancel-room" class="btn btn-ghost btn-full">Cancel Match</button>
+          </div>
+
+          <!-- Joining status -->
+          <div id="online-joining" class="online-panel hidden">
+            <div class="room-code-box">
+              <div class="status-pulse">
+                <span class="dot"></span>
+                <span id="joining-status">Connecting to match...</span>
+              </div>
+            </div>
+            <button id="btn-cancel-join" class="btn btn-ghost btn-full">Cancel</button>
+          </div>
+        </section>
+
+        <!-- Secondary Card: Quick Play (CPU & Local 2P) -->
+        <section class="card card-secondary">
+          <div class="card-header">
+            <span class="card-pill pill-blue">INSTANT PLAY</span>
+            <h2>Solo &amp; Couch Duel</h2>
+          </div>
+
+          <div class="quick-modes">
+            <div class="mode-block">
+              <div class="mode-info">
+                <h3>vs. CPU Bot</h3>
+                <p>Practice your timing, blocks, and chin-popping counters.</p>
+              </div>
+              <div class="difficulty-row">
+                <button class="btn btn-outline btn-cpu" data-diff="easy">Easy</button>
+                <button class="btn btn-outline btn-cpu" data-diff="medium">Medium</button>
+                <button class="btn btn-outline btn-cpu" data-diff="hard">Tough</button>
+              </div>
+            </div>
+
+            <div class="mode-block">
+              <div class="mode-info">
+                <h3>Local 2-Player</h3>
+                <p>Same keyboard: Red uses <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> &bull; Blue uses <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd></p>
+              </div>
+              <button id="btn-local-2p" class="btn btn-dark btn-full">Start Local 2P</button>
+            </div>
+          </div>
+
+          <div class="controls-legend">
+            <h4>HOW TO WIN</h4>
+            <ul>
+              <li><strong>Left / Right Punch</strong> (<kbd>A</kbd> / <kbd>D</kbd>): Snap quick jabs &amp; hooks.</li>
+              <li><strong>Block</strong> (<kbd>S</kbd> or <kbd>Space</kbd>): Absorb hits &amp; unlock a <strong>2x COUNTER</strong> window!</li>
+              <li><strong>Pop Their Head!</strong> Drain their Chin Integrity to launch their head off on a spring.</li>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- GAME ARENA SCREEN -->
+    <main id="screen-game" class="screen">
+      <!-- HUD -->
+      <div class="hud">
+        <!-- Red Player (Left) -->
+        <div class="hud-fighter hud-red">
+          <div class="hud-identity">
+            <div id="hud-red-avatar" class="avatar avatar-red">R</div>
+            <div class="hud-name-wrap">
+              <div class="hud-name-row">
+                <span id="hud-red-name" class="hud-name">RED ROCKER</span>
+                <span id="hud-red-tag" class="you-tag hidden">YOU</span>
+              </div>
+              <div id="hud-red-rounds" class="round-pips"></div>
+            </div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-label">
+              <span>CHIN INTEGRITY</span>
+              <span id="hud-red-hp-val">100%</span>
+            </div>
+            <div class="bar-track bar-hp">
+              <div id="hud-red-hp" class="bar-fill fill-red" style="width: 100%"></div>
+            </div>
+            <div class="bar-track bar-stamina">
+              <div id="hud-red-stam" class="bar-fill fill-gold" style="width: 100%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Center Round / Timer -->
+        <div class="hud-center">
+          <div id="hud-round-label" class="round-label">ROUND 1</div>
+          <div id="hud-timer" class="round-timer">60</div>
+          <div id="hud-net-badge" class="net-badge hidden">
+            <span class="net-dot"></span>
+            <span id="hud-ping">Online</span>
+          </div>
+        </div>
+
+        <!-- Blue Player (Right) -->
+        <div class="hud-fighter hud-blue">
+          <div class="hud-identity hud-identity-right">
+            <div class="hud-name-wrap align-right">
+              <div class="hud-name-row justify-end">
+                <span id="hud-blue-tag" class="you-tag you-tag-blue hidden">YOU</span>
+                <span id="hud-blue-name" class="hud-name">BLUE BOMBER</span>
+              </div>
+              <div id="hud-blue-rounds" class="round-pips justify-end"></div>
+            </div>
+            <div id="hud-blue-avatar" class="avatar avatar-blue">B</div>
+          </div>
+          <div class="bar-group">
+            <div class="bar-label">
+              <span id="hud-blue-hp-val">100%</span>
+              <span>CHIN INTEGRITY</span>
+            </div>
+            <div class="bar-track bar-hp">
+              <div id="hud-blue-hp" class="bar-fill fill-blue" style="width: 100%"></div>
+            </div>
+            <div class="bar-track bar-stamina">
+              <div id="hud-blue-stam" class="bar-fill fill-gold" style="width: 100%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Canvas Stage -->
+      <div class="stage-wrap">
+        <canvas id="game-canvas" width="960" height="540"></canvas>
+
+        <!-- Center Banner Overlay (FIGHT!, KO!, etc.) -->
+        <div id="stage-banner" class="stage-banner hidden">
+          <div id="stage-banner-main" class="banner-main">FIGHT!</div>
+          <div id="stage-banner-sub" class="banner-sub">KNOCK THEIR BLOCK OFF!</div>
+        </div>
+
+        <!-- Match Over Modal Overlay -->
+        <div id="match-overlay" class="match-overlay hidden">
+          <div class="match-card">
+            <div id="match-result-badge" class="result-badge">KNOCKOUT!</div>
+            <h2 id="match-winner-title">RED ROCKER WINS!</h2>
+            <p id="match-winner-sub">Final Score: 2 - 0</p>
+            <div class="match-actions">
+              <button id="btn-rematch" class="btn btn-red btn-lg">Rematch</button>
+              <button id="btn-back-lobby" class="btn btn-ghost btn-lg">Back to Lobby</button>
+            </div>
+            <p id="rematch-status" class="hint-text hidden"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Arcade Tactile Controls (Mobile + Mouse + Visual Key Guide) -->
+      <div class="arcade-deck">
+        <div id="controls-p1" class="control-pod">
+          <button class="arcade-btn btn-punch-left" data-action="left">
+            <span class="btn-cap">LEFT HOOK</span>
+            <kbd id="key-left">A</kbd>
+          </button>
+          <button class="arcade-btn btn-block" data-action="block">
+            <span class="btn-cap">GUARD</span>
+            <kbd id="key-block">S</kbd>
+          </button>
+          <button class="arcade-btn btn-punch-right" data-action="right">
+            <span class="btn-cap">RIGHT CROSS</span>
+            <kbd id="key-right">D</kbd>
+          </button>
+        </div>
+
+        <button id="btn-exit-match" class="btn btn-ghost btn-sm exit-btn">Leave Match</button>
+      </div>
+    </main>
+
+    <!-- PROFILE & GOOGLE SIGN-IN MODAL -->
+    <div id="modal-auth" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Player Profile &amp; Google Sign-In</h3>
+          <button id="btn-close-auth" class="icon-btn" aria-label="Close">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Google Sign-In Container (rendered if Client ID is set) -->
+          <div id="google-signin-section" class="auth-section">
+            <div id="google-btn-wrap" class="google-btn-wrap"></div>
+            <div id="google-signed-in-info" class="signed-in-box hidden">
+              <div class="signed-in-row">
+                <img id="modal-google-pic" class="google-pic" alt="" />
+                <div>
+                  <strong id="modal-google-name"></strong>
+                  <div id="modal-google-email" class="hint-text"></div>
+                </div>
+              </div>
+              <button id="btn-google-signout" class="btn btn-ghost btn-sm">Sign Out</button>
+            </div>
+          </div>
+
+          <!-- Display Name / Email (works immediately without OAuth setup) -->
+          <form id="form-profile" class="auth-section">
+            <label for="input-player-name">Display Name</label>
+            <input id="input-player-name" type="text" maxlength="20" placeholder="Your fighter name" />
+
+            <label for="input-player-email">Your Gmail (optional, shown on invites)</label>
+            <input id="input-player-email" type="email" placeholder="you@gmail.com" />
+
+            <button type="submit" class="btn btn-blue btn-full">Save Profile</button>
+          </form>
+
+          <!-- Optional Google OAuth Client ID Setup -->
+          <details class="oauth-setup">
+            <summary>Enable Real "Sign in with Google" Button (Optional)</summary>
+            <p class="hint-text">
+              Paste a Google Cloud OAuth 2.0 Web Client ID to enable live Google Sign-In with profile photos. Add your site's origin to Authorized JavaScript Origins in Google Cloud Console.
+            </p>
+            <div class="invite-row">
+              <input id="input-google-client-id" type="text" placeholder="123456789-xxx.apps.googleusercontent.com" />
+              <button id="btn-save-client-id" type="button" class="btn btn-outline btn-sm">Save</button>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
