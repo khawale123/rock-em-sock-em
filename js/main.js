@@ -281,6 +281,8 @@ const net = new NetworkManager({
           const guestSide = hostSide === 'red' ? 'blue' : 'red';
           if (typeof msg.moveIndex === 'number') {
             engine.triggerMove(guestSide, msg.moveIndex);
+          } else if (msg.action === 'dodge') {
+            engine.triggerDodge(guestSide);
           } else if (msg.action === 'block') {
             engine.setBlock(guestSide, msg.active);
           }
@@ -636,6 +638,8 @@ function sendPlayerAction(action, active = true) {
   if (currentMode === 'online-guest') {
     if (moveMatch) {
       net.send({ type: 'input', moveIndex: Number(moveMatch[1]) });
+    } else if (action === 'dodge') {
+      net.send({ type: 'input', action: 'dodge' });
     } else if (action === 'block') {
       net.send({ type: 'input', action: 'block', active });
     }
@@ -646,6 +650,8 @@ function sendPlayerAction(action, active = true) {
   const side = currentMode === 'local' ? 'red' : mySide;
   if (moveMatch) {
     engine.triggerMove(side, Number(moveMatch[1]));
+  } else if (action === 'dodge') {
+    engine.triggerDodge(side);
   } else if (action === 'block') {
     engine.setBlock(side, active);
   }
@@ -658,7 +664,7 @@ window.addEventListener('keydown', (e) => {
 
   const key = e.key.toLowerCase();
 
-  // Primary player controls (A/W/D/E or 1/2/3/4 + S/Space for Guard)
+  // Primary player controls (A/W/D/E or 1/2/3/4, Q/Shift for Dodge, S/Space for Guard)
   if (key === 'a' || key === '1') {
     sendPlayerAction('move0');
     flashArcadeBtn('move0', true);
@@ -671,18 +677,22 @@ window.addEventListener('keydown', (e) => {
   } else if (key === 'e' || key === '4') {
     sendPlayerAction('move3');
     flashArcadeBtn('move3', true);
+  } else if (key === 'q' || key === 'shift') {
+    sendPlayerAction('dodge');
+    flashArcadeBtn('dodge', true);
   } else if (key === 's' || key === ' ') {
     e.preventDefault();
     sendPlayerAction('block', true);
     flashArcadeBtn('block', true);
   }
 
-  // Local 2P second player (Husbun: J / I / L / O + K Guard)
+  // Local 2P second player (Husbun: J / I / L / O + U Dodge / K Guard)
   if (currentMode === 'local') {
     if (key === 'j') engine.triggerMove('blue', 0);
     else if (key === 'i') engine.triggerMove('blue', 1);
     else if (key === 'l') engine.triggerMove('blue', 2);
     else if (key === 'o') engine.triggerMove('blue', 3);
+    else if (key === 'u') engine.triggerDodge('blue');
     else if (key === 'k') engine.setBlock('blue', true);
   }
 });
@@ -693,6 +703,7 @@ window.addEventListener('keyup', (e) => {
   if (key === 'w' || key === '2') flashArcadeBtn('move1', false);
   if (key === 'd' || key === '3') flashArcadeBtn('move2', false);
   if (key === 'e' || key === '4') flashArcadeBtn('move3', false);
+  if (key === 'q' || key === 'shift') flashArcadeBtn('dodge', false);
   if (key === 's' || key === ' ') {
     sendPlayerAction('block', false);
     flashArcadeBtn('block', false);

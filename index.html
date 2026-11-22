@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Wifebun vs Husbun — Beatdown Sesh</title>
+  <title>Wifebun ♥ Husbun — Beatdown Sesh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet" />
@@ -14,10 +14,11 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-  <!-- Subtle floating romantic hearts backdrop -->
+  <!-- Dreamy floating romantic hearts & rose petals backdrop -->
   <div class="romantic-hearts" aria-hidden="true">
-    <span>♥</span><span>♥</span><span>♥</span><span>♥</span>
-    <span>♥</span><span>♥</span><span>♥</span><span>♥</span>
+    <span>♥</span><span>🌸</span><span>♥</span><span>✨</span>
+    <span>♥</span><span>🌸</span><span>♥</span><span>💕</span>
+    <span>♥</span><span>🌸</span>
   </div>
 
   <div id="app" class="app-shell">
@@ -50,14 +51,14 @@
     <!-- LOBBY SCREEN -->
     <main id="screen-lobby" class="screen active">
       <div class="lobby-hero">
-        <div class="hero-tag">💕 DATE NIGHT BUNNY SHOWDOWN 💕</div>
-        <h1 class="hero-title"><span class="text-pink">WIFEBUN</span> <span class="hero-vs">vs</span> <span class="text-blue">HUSBUN</span><br/><span class="hero-sub-title">BEATDOWN SESH</span></h1>
-        <p class="hero-subtitle">A cozy little 1-on-1 ring made just for the two of us — pick your bunny and step inside to discover your secret moves.</p>
+        <div class="hero-tag">💕 MOONLIT DATE NIGHT RING 💕</div>
+        <h1 class="hero-title"><span class="text-pink">WIFEBUN</span> <span class="hero-vs">♥</span> <span class="text-blue">HUSBUN</span><br/><span class="hero-sub-title">BEATDOWN SESH</span></h1>
+        <p class="hero-subtitle">A lovey-dovey 1-on-1 bunny showdown made just for the two of us — step under the fairy lights to unlock your secret moves.</p>
       </div>
 
-      <!-- Character Picker Bar (moves intentionally hidden as a surprise!) -->
+      <!-- Character Picker Bar (moves stay hidden as a surprise!) -->
       <div class="fighter-picker-bar">
-        <span class="picker-label">♥ CHOOSE YOUR BUNNY ♥</span>
+        <span class="picker-label">♥ PICK YOUR BUNNY ♥</span>
         <div class="fighter-toggle" id="fighter-selector">
           <button type="button" class="fighter-btn active" data-fighter="wifebun">
             <span class="fighter-emoji">🎀🐰</span>
@@ -84,7 +85,6 @@
             <h2>Play Together</h2>
           </div>
 
-          <!-- Initial Online Actions -->
           <div id="online-idle" class="online-panel">
             <div class="rounds-row">
               <label for="rounds-selector">Match Format</label>
@@ -107,7 +107,6 @@
             </form>
           </div>
 
-          <!-- Hosting / Waiting for Opponent -->
           <div id="online-waiting" class="online-panel hidden">
             <div class="room-code-box">
               <span class="room-label">SHARE THIS LINK TO JOIN YOUR MATCH</span>
@@ -128,7 +127,6 @@
               </div>
             </div>
 
-            <!-- Send Invite to Google User -->
             <div class="invite-box">
               <label for="input-friend-email">Invite via Gmail</label>
               <div class="invite-row">
@@ -138,13 +136,12 @@
                   Gmail Invite
                 </button>
               </div>
-              <p class="hint-text">Opens Gmail with a pre-filled 1-click match link. Your partner automatically gets the other bunny!</p>
+              <p class="hint-text">Opens Gmail with a 1-click match link. Your partner automatically gets the other bunny!</p>
             </div>
 
             <button id="btn-cancel-room" class="btn btn-ghost btn-full">Cancel Match</button>
           </div>
 
-          <!-- Joining status -->
           <div id="online-joining" class="online-panel hidden">
             <div class="room-code-box">
               <div class="status-pulse">
@@ -167,7 +164,7 @@
             <div class="mode-block">
               <div class="mode-info">
                 <h3>Practice Solo (vs. CPU Bunny)</h3>
-                <p>Jump straight into Wifebun vs Husbun to preview the ring and moves.</p>
+                <p>Jump straight into Wifebun vs Husbun to test moves, dodges &amp; combos.</p>
               </div>
               <div class="warmup-quick-row">
                 <button class="btn btn-red btn-sm btn-warmup-side" data-side="wifebun">🎀 Play as Wifebun</button>
@@ -183,18 +180,18 @@
             <div class="mode-block">
               <div class="mode-info">
                 <h3>Couch 2-Player (Same Keyboard)</h3>
-                <p>Wifebun: <kbd>A</kbd> <kbd>W</kbd> <kbd>D</kbd> <kbd>E</kbd> + <kbd>S</kbd> Guard &bull; Husbun: <kbd>J</kbd> <kbd>I</kbd> <kbd>L</kbd> <kbd>O</kbd> + <kbd>K</kbd> Guard</p>
+                <p>Wifebun: <kbd>A</kbd> <kbd>W</kbd> <kbd>D</kbd> <kbd>E</kbd> + <kbd>Q</kbd> Dodge / <kbd>S</kbd> Guard &bull; Husbun: <kbd>J</kbd> <kbd>I</kbd> <kbd>L</kbd> <kbd>O</kbd> + <kbd>U</kbd> Dodge / <kbd>K</kbd> Guard</p>
               </div>
               <button id="btn-local-2p" class="btn btn-dark btn-full">Play Wifebun vs Husbun (Local 2P)</button>
             </div>
           </div>
 
           <div class="controls-legend">
-            <h4>♥ HOW TO PLAY ♥</h4>
+            <h4>♥ FIGHTING CONTROLS ♥</h4>
             <ul>
-              <li><strong>4 Secret Moves</strong> (<kbd>A</kbd> <kbd>W</kbd> <kbd>D</kbd> <kbd>E</kbd> or tap buttons): Revealed once you step in the ring!</li>
-              <li><strong>Guard</strong> (<kbd>S</kbd> or <kbd>Space</kbd>): Block a hit to unlock a golden <strong>2x COUNTER</strong>!</li>
-              <li><strong>Pop Their Bun Head!</strong> Drain their Bun Integrity to win the round.</li>
+              <li><strong>4 Secret Moves</strong> (<kbd>A</kbd> <kbd>W</kbd> <kbd>D</kbd> <kbd>E</kbd>): Revealed in the ring — chain hits for Love Combos!</li>
+              <li><strong>Dodge</strong> (<kbd>Q</kbd> or <kbd>Shift</kbd>): Hop back with afterimages! <strong>Perfect Dodge</strong> = 2x Counter!</li>
+              <li><strong>Guard</strong> (<kbd>S</kbd> or <kbd>Space</kbd>): Block incoming attacks &amp; unlock a golden Counter!</li>
             </ul>
           </div>
         </section>
@@ -219,7 +216,7 @@
           </div>
           <div class="bar-group">
             <div class="bar-label">
-              <span>BUN INTEGRITY</span>
+              <span>♥ BUN INTEGRITY</span>
               <span id="hud-red-hp-val">100%</span>
             </div>
             <div class="bar-track bar-hp">
@@ -256,7 +253,7 @@
           <div class="bar-group">
             <div class="bar-label">
               <span id="hud-blue-hp-val">100%</span>
-              <span>BUN INTEGRITY</span>
+              <span>BUN INTEGRITY ♥</span>
             </div>
             <div class="bar-track bar-hp">
               <div id="hud-blue-hp" class="bar-fill fill-blue" style="width: 100%"></div>
@@ -281,7 +278,7 @@
         <!-- Match Over Modal Overlay -->
         <div id="match-overlay" class="match-overlay hidden">
           <div class="match-card">
-            <div id="match-result-badge" class="result-badge">KNOCKOUT!</div>
+            <div id="match-result-badge" class="result-badge">💕 KNOCKOUT! 💕</div>
             <h2 id="match-winner-title">WIFEBUN WINS!</h2>
             <p id="match-winner-sub">Final Score: 2 - 0</p>
             <div class="match-actions">
@@ -293,9 +290,9 @@
         </div>
       </div>
 
-      <!-- Arcade Tactile Controls (4 Character Moves + Guard) -->
+      <!-- Fighting-Game Control Deck (4 Moves + Dodge + Guard) -->
       <div class="arcade-deck">
-        <div id="controls-p1" class="control-pod control-pod-5">
+        <div id="controls-p1" class="control-pod control-pod-6">
           <button class="arcade-btn btn-move" data-action="move0">
             <span class="btn-emoji" id="move0-emoji">🍐</span>
             <span class="btn-cap" id="move0-label">PEAR BOUNCE</span>
@@ -305,6 +302,11 @@
             <span class="btn-emoji" id="move1-emoji">🎧</span>
             <span class="btn-cap" id="move1-label">DJ SPIN</span>
             <kbd>W</kbd>
+          </button>
+          <button class="arcade-btn btn-dodge" data-action="dodge">
+            <span class="btn-emoji">✨</span>
+            <span class="btn-cap">DODGE</span>
+            <kbd>Q</kbd>
           </button>
           <button class="arcade-btn btn-block" data-action="block">
             <span class="btn-emoji">🛡️</span>

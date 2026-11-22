@@ -1379,3 +1379,64 @@ kbd {
   background: rgba(40, 17, 45, 0.9);
   border-color: rgba(255, 182, 218, 0.18);
 }
+
+/* 6-BUTTON FIGHTING DECK (4 MOVES + DODGE + GUARD) */
+.control-pod-6 {
+  grid-template-columns: repeat(6, 1fr);
+  max-width: 860px;
+  gap: 9px;
+}
+
+.control-pod-6 .btn-cap {
+  font-size: 0.72rem;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.btn-dodge {
+  background: linear-gradient(180deg, #c084fc 0%, #9333ea 100%);
+  color: #fff;
+  box-shadow: 0 5px 0 #581c87, 0 8px 18px rgba(168, 85, 247, 0.35);
+}
+
+.btn-dodge:hover {
+  filter: brightness(1.08);
+}
+
+.romantic-hearts span:nth-child(9)  { left: 14%; font-size: 1.8rem; animation-duration: 16s; animation-delay: 7s; }
+.romantic-hearts span:nth-child(10) { left: 79%; font-size: 1.6rem; animation-duration: 13s; animation-delay: 3.5s; }
+
+/* Heart-shaped round pips */
+.pip {
+  width: auto;
+  height: auto;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: rgba(255, 182, 218, 0.22);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.pip::before {
+  content: '♥';
+}
+
+.pip.won-red {
+  color: #ff69b4;
+  text-shadow: 0 0 10px rgba(255, 105, 180, 0.85);
+  transform: scale(1.18);
+}
+
+.pip.won-blue {
+  color: #60a5fa;
+  text-shadow: 0 0 10px rgba(96, 165, 250, 0.85);
+  transform: scale(1.18);
+}
+
+@media (max-width: 780px) {
+  .control-pod-6 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
