@@ -500,6 +500,16 @@ export class GameEngine {
     }
 
     if (this.mode === 'online-guest') {
+      [this.red, this.blue].forEach((f) => {
+        f.animTime += clampedDt;
+        if (typeof f._netX === 'number') {
+          f.x += (f._netX - f.x) * Math.min(1, clampedDt * 24);
+          f.y += (f._netY - f.y) * Math.min(1, clampedDt * 24);
+        }
+        f.squashX += (1 - f.squashX) * Math.min(1, clampedDt * 13);
+        f.squashY += (1 - f.squashY) * Math.min(1, clampedDt * 13);
+        f.earLag += (-f.vx * 0.0012 - f.earLag) * Math.min(1, clampedDt * 10);
+      });
       this._updateCamera(clampedDt);
       this._notifyHud(false);
       return;
@@ -1348,8 +1358,22 @@ export class GameEngine {
     this.bestOf = s.bestOf;
     this.roundsToWin = s.roundsToWin;
 
-    Object.assign(this.red, s.red);
-    Object.assign(this.blue, s.blue);
+    const syncFighter = (target, src) => {
+      if (!src) return;
+      const snap = prevRound !== this.round || Math.hypot((src.x ?? target.x) - target.x, (src.y ?? target.y) - target.y) > 220;
+      const curX = target.x;
+      const curY = target.y;
+      Object.assign(target, src);
+      target._netX = src.x;
+      target._netY = src.y;
+      if (!snap) {
+        target.x = curX;
+        target.y = curY;
+      }
+    };
+
+    syncFighter(this.red, s.red);
+    syncFighter(this.blue, s.blue);
     this.projectiles = (s.projectiles || []).map((p) => ({ ...p }));
 
     if (prevPhase !== this.phase || prevRound !== this.round) {
@@ -1401,6 +1425,10 @@ export class GameEngine {
     } else if (ev.kind === 'hit') {
       sound.playHit(ev.heavy || ev.counter);
       this.shake = ev.counter ? 15 : ev.heavy ? 11 : 6;
+      if (ev.moveId === 'forehead_kiss') {
+        this.romanceBloom = 0.55;
+        this.vfx.push({ kind: 'kiss_bloom', x: ev.x, y: ev.y - 36, t: 0, duration: 0.82 });
+      }
       this._spawnHitSpark(ev.x, ev.y, ev.color, ev.heavy ? 68 : 48);
       this._spawnShockwave(ev.x, ev.y, ev.counter ? '#ffd479' : ev.color, ev.heavy ? 130 : 88);
       this._spawnMoveHitParticles(ev.x, ev.y, ev.moveId, ev.color);

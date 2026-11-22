@@ -8,8 +8,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
-  <!-- PeerJS for zero-config WebRTC 1v1 multiplayer -->
-  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
+  <!-- MQTT.js over Secure WebSockets (works across all Wi-Fi/cellular/NATs/iOS/desktop) -->
+  <script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+  <script>
+    if (typeof window.mqtt === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"><\/script>');
+    }
+  </script>
   <!-- Google Identity Services (activated when a Google Client ID is configured) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>

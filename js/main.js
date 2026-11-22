@@ -279,19 +279,26 @@ const net = new NetworkManager({
       case 'hello':
         opponentProfile = msg.profile || { name: 'Wifebun', email: '', picture: '' };
         if (net.role === 'host') {
+          const alreadyPlaying = currentMode === 'online-host' && els.screenGame.classList.contains('active');
           net.send({
             type: 'start',
             bestOf: selectedBestOf,
             hostProfile: auth.getProfile(),
           });
-          launchMatch('online-host');
+          if (!alreadyPlaying) {
+            launchMatch('online-host');
+          } else {
+            net.send({ type: 'state', state: engine.exportState() });
+          }
         }
         break;
 
       case 'start':
         if (msg.hostProfile) opponentProfile = msg.hostProfile;
         selectedBestOf = msg.bestOf || 3;
-        launchMatch('online-guest');
+        if (!(currentMode === 'online-guest' && els.screenGame.classList.contains('active') && engine.phase !== 'match_over')) {
+          launchMatch('online-guest');
+        }
         break;
 
       case 'input':
@@ -413,7 +420,7 @@ function launchMatch(mode, cpuDiff = currentCpuDiff) {
 }
 
 function returnToLobby() {
-  net.disconnect();
+  net.disconnect(true);
   setOnlinePanel('idle');
   els.matchOverlay.classList.add('hidden');
   els.screenGame.classList.remove('active');
@@ -806,6 +813,10 @@ function tick(now) {
 
 requestAnimationFrame(tick);
 
+window.addEventListener('beforeunload', () => {
+  net.disconnect(true);
+});
+
 // ==========================
 // AUTO-JOIN FROM ?room= INVITE LINK (Invited player is ALWAYS Wifebun!)
 // ==========================
@@ -813,7 +824,6 @@ const urlParams = new URLSearchParams(window.location.search);
 const inviteRoom = urlParams.get('room');
 if (inviteRoom) {
   els.inputRoomCode.value = inviteRoom.toUpperCase();
-  window.addEventListener('load', () => {
-    setTimeout(() => handleJoinCode(inviteRoom), 300);
-  });
+  // Fire immediately (waitForMqtt inside joinRoom safely waits for the MQTT script!)
+  handleJoinCode(inviteRoom);
 }
