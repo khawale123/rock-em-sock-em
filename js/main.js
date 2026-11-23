@@ -420,6 +420,7 @@ function launchMatch(mode, cpuDiff = currentCpuDiff) {
 }
 
 function returnToLobby() {
+  releaseAllHeldInputs();
   net.disconnect(true);
   setOnlinePanel('idle');
   els.matchOverlay.classList.add('hidden');
@@ -766,6 +767,21 @@ function flashArcadeBtn(action, pressed) {
   if (btn) btn.classList.toggle('pressed', pressed);
 }
 
+function releaseAllHeldInputs() {
+  engine.clearInputs();
+  els.controlsP1.querySelectorAll('.arcade-btn.pressed').forEach((btn) => btn.classList.remove('pressed'));
+  if (currentMode === 'online-guest' && net.isConnected()) {
+    ['left', 'right', 'block'].forEach((action) => {
+      net.send({ type: 'input', action, active: false });
+    });
+  }
+}
+
+window.addEventListener('blur', releaseAllHeldInputs);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) releaseAllHeldInputs();
+});
+
 // On-screen fighter pad (touch + mouse)
 els.controlsP1.querySelectorAll('.arcade-btn').forEach((btn) => {
   const action = btn.dataset.action;
@@ -773,10 +789,12 @@ els.controlsP1.querySelectorAll('.arcade-btn').forEach((btn) => {
 
   const onDown = (e) => {
     e.preventDefault();
+    if (btn.classList.contains('pressed')) return;
     btn.classList.add('pressed');
     sendPlayerAction(action, true);
   };
   const onUp = (e) => {
+    if (!btn.classList.contains('pressed')) return;
     e.preventDefault();
     btn.classList.remove('pressed');
     if (isHold) sendPlayerAction(action, false);

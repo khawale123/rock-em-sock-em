@@ -6,7 +6,7 @@
   <title>Wifebun ♥ Husbun — Beatdown Sesh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Chakra+Petch:ital,wght@0,500;0,600;0,700;1,700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <!-- MQTT.js over Secure WebSockets (works across all Wi-Fi/cellular/NATs/iOS/desktop) -->
   <script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
@@ -19,11 +19,12 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-  <!-- Dreamy floating romantic hearts & cherry blossoms backdrop -->
+  <!-- Atmospheric moonlit velvet backdrop & floating cherry blossoms / hearts -->
+  <div class="arcade-backdrop" aria-hidden="true"></div>
   <div class="romantic-hearts" aria-hidden="true">
     <span>♥</span><span>🌸</span><span>♥</span><span>✨</span>
     <span>♥</span><span>🌸</span><span>♥</span><span>💕</span>
-    <span>♥</span><span>🌸</span>
+    <span>♥</span><span>🌸</span><span>✨</span><span>♥</span>
   </div>
 
   <div id="app" class="app-shell">
@@ -41,41 +42,53 @@
             <span id="user-name" class="user-name">Player</span>
             <span id="user-sub" class="user-sub">Guest</span>
           </div>
-          <button id="btn-auth-modal" class="icon-btn" title="Google Sign-In & Profile">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <button id="btn-auth-modal" class="icon-btn" title="Google Sign-In &amp; Profile">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
         </div>
 
         <button id="btn-sound" class="icon-btn" title="Toggle Sound">
-          <svg id="icon-sound-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-          <svg id="icon-sound-off" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+          <svg id="icon-sound-on" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+          <svg id="icon-sound-off" class="hidden" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
         </button>
       </div>
     </header>
 
-    <!-- LOBBY SCREEN (Moves stay hidden as a surprise!) -->
+    <!-- LOBBY SCREEN (All 8 moves stay hidden as a surprise!) -->
     <main id="screen-lobby" class="screen active">
       <div class="lobby-hero">
-        <div class="hero-tag">🌸 MOONLIT ROMANCE FIGHTER 🌸</div>
-        <h1 class="hero-title"><span class="text-pink">WIFEBUN</span> <span class="hero-vs">♥</span> <span class="text-blue">HUSBUN</span><br/><span class="hero-sub-title">BEATDOWN SESH</span></h1>
-        <p class="hero-subtitle">A flirty, Street-Fighter-style 1-on-1 bunny showdown made just for the two of us — charge your Romance Super with blocks &amp; time, and step under the moonlight to reveal your secret moves.</p>
+        <div class="hero-tag">🌸 MOONLIT ROMANCE ARCADE FIGHTER 🌸</div>
+        <h1 class="hero-title">
+          <span class="text-pink">WIFEBUN</span>
+          <span class="hero-vs">♥</span>
+          <span class="text-blue">HUSBUN</span>
+          <br />
+          <span class="hero-sub-title">BEATDOWN SESH</span>
+        </h1>
+        <p class="hero-subtitle">A flirty, Street-Fighter-style 1-on-1 bunny showdown under the Parisian moonlight — charge your Romance Super with guards &amp; timing, and step into the ring to unveil your secret moves.</p>
       </div>
 
-      <!-- Character Preview Banner (No move spoilers!) -->
+      <!-- Slanted Arcade Character Versus Banner (No move spoilers!) -->
       <div class="duo-banner">
         <div class="duo-pill duo-wifebun">
           <span class="fighter-emoji">🎀🐰</span>
-          <div>
-            <strong>WIFEBUN</strong>
-            <small>Invited Player &bull; Alluring caramel bunny &bull; 3 moves + Secret Super</small>
+          <div class="duo-copy">
+            <div class="duo-title-row">
+              <strong>WIFEBUN</strong>
+              <span class="role-chip chip-pink">INVITED PLAYER</span>
+            </div>
+            <small>Alluring honey-caramel bunny &bull; 3 secret moves + Romance Super</small>
           </div>
         </div>
-        <div class="duo-heart">♥</div>
+        <div class="duo-heart" aria-hidden="true"><span>VS</span><em>♥</em></div>
         <div class="duo-pill duo-husbun">
           <span class="fighter-emoji">💪🐰</span>
-          <div>
-            <strong>HUSBUN</strong>
-            <small>Match Host &bull; Suave cocoa bunny &bull; 3 moves + Secret Super</small>
+          <div class="duo-copy">
+            <div class="duo-title-row">
+              <strong>HUSBUN</strong>
+              <span class="role-chip chip-blue">MATCH HOST</span>
+            </div>
+            <small>Suave mocha-cocoa bunny &bull; 3 secret moves + Romance Super</small>
           </div>
         </div>
       </div>
@@ -100,7 +113,7 @@
               </div>
             </div>
 
-            <button id="btn-create-room" class="btn btn-red btn-lg btn-full">
+            <button id="btn-create-room" class="btn btn-red btn-lg btn-full btn-sheen">
               <span class="btn-icon">💌</span> Create 1v1 Match &amp; Invite Link
             </button>
 
@@ -169,7 +182,7 @@
             <div class="mode-block">
               <div class="mode-info">
                 <h3>Practice Solo (vs. CPU Bunny)</h3>
-                <p>Run, jump, dodge, block to charge your Super, and preview both bunnies.</p>
+                <p>Run, jump, dodge, guard to charge your Super, and preview either fighter in 1 click.</p>
               </div>
               <div class="warmup-quick-row">
                 <button class="btn btn-red btn-sm btn-warmup-side" data-side="wifebun">🎀 Play as Wifebun</button>
@@ -206,43 +219,54 @@
 
     <!-- GAME ARENA SCREEN -->
     <main id="screen-game" class="screen">
-      <!-- Fighting-Game HUD -->
+      <!-- Capcom / Guilty Gear Fighting-Game HUD -->
       <div class="hud">
         <!-- Wifebun (Left) -->
         <div class="hud-fighter hud-red">
-          <div class="hud-identity">
-            <div id="hud-red-avatar" class="avatar avatar-red">🎀</div>
-            <div class="hud-name-wrap">
-              <div class="hud-name-row">
-                <span id="hud-red-name" class="hud-name">WIFEBUN</span>
-                <span id="hud-red-tag" class="you-tag hidden">YOU</span>
+          <div class="hud-top-row">
+            <div class="hud-identity">
+              <div id="hud-red-avatar" class="avatar avatar-red">🎀</div>
+              <div class="hud-name-wrap">
+                <div class="hud-name-row">
+                  <span id="hud-red-name" class="hud-name">WIFEBUN</span>
+                  <span id="hud-red-tag" class="you-tag hidden">YOU</span>
+                </div>
+                <div id="hud-red-rounds" class="round-pips"></div>
               </div>
-              <div id="hud-red-rounds" class="round-pips"></div>
+            </div>
+            <div class="hud-hp-readout">
+              <span class="hp-caption">♥ LOVE</span>
+              <span id="hud-red-hp-val" class="hp-num">100%</span>
             </div>
           </div>
+
           <div class="bar-group">
-            <div class="bar-label">
-              <span>♥ LOVE HP</span>
-              <span id="hud-red-hp-val">100%</span>
+            <div class="bar-frame bar-frame-left">
+              <div class="bar-track bar-hp">
+                <div id="hud-red-hp-trail" class="bar-trail" style="width: 100%"></div>
+                <div id="hud-red-hp" class="bar-fill fill-red" style="width: 100%"></div>
+              </div>
             </div>
-            <div class="bar-track bar-hp">
-              <div id="hud-red-hp-trail" class="bar-trail" style="width: 100%"></div>
-              <div id="hud-red-hp" class="bar-fill fill-red" style="width: 100%"></div>
-            </div>
-            <div class="bar-label super-label-row">
-              <span>✨ SPECIAL SUPER</span>
-              <span id="hud-red-super-val">0%</span>
-            </div>
-            <div class="bar-track bar-super">
-              <div id="hud-red-super" class="bar-fill fill-super" style="width: 0%"></div>
+            <div class="super-row">
+              <div class="bar-label super-label-row">
+                <span>✨ SPECIAL SUPER</span>
+                <span id="hud-red-super-val" class="super-val">0%</span>
+              </div>
+              <div class="bar-frame bar-frame-super bar-frame-left">
+                <div class="bar-track bar-super">
+                  <div id="hud-red-super" class="bar-fill fill-super" style="width: 0%"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Center Round / Timer -->
+        <!-- Center Arcade Timer Medallion -->
         <div class="hud-center">
-          <div id="hud-round-label" class="round-label">ROUND 1</div>
-          <div id="hud-timer" class="round-timer">99</div>
+          <div class="timer-medallion">
+            <div id="hud-round-label" class="round-label">ROUND 1</div>
+            <div id="hud-timer" class="round-timer">99</div>
+          </div>
           <div id="hud-net-badge" class="net-badge hidden">
             <span class="net-dot"></span>
             <span id="hud-ping">Online</span>
@@ -251,31 +275,40 @@
 
         <!-- Husbun (Right) -->
         <div class="hud-fighter hud-blue">
-          <div class="hud-identity hud-identity-right">
-            <div class="hud-name-wrap align-right">
-              <div class="hud-name-row justify-end">
-                <span id="hud-blue-tag" class="you-tag you-tag-blue hidden">YOU</span>
-                <span id="hud-blue-name" class="hud-name">HUSBUN</span>
+          <div class="hud-top-row hud-top-row-right">
+            <div class="hud-hp-readout hud-hp-readout-right">
+              <span id="hud-blue-hp-val" class="hp-num">100%</span>
+              <span class="hp-caption">LOVE ♥</span>
+            </div>
+            <div class="hud-identity hud-identity-right">
+              <div class="hud-name-wrap align-right">
+                <div class="hud-name-row justify-end">
+                  <span id="hud-blue-tag" class="you-tag you-tag-blue hidden">YOU</span>
+                  <span id="hud-blue-name" class="hud-name">HUSBUN</span>
+                </div>
+                <div id="hud-blue-rounds" class="round-pips justify-end"></div>
               </div>
-              <div id="hud-blue-rounds" class="round-pips justify-end"></div>
+              <div id="hud-blue-avatar" class="avatar avatar-blue">💪</div>
             </div>
-            <div id="hud-blue-avatar" class="avatar avatar-blue">💪</div>
           </div>
+
           <div class="bar-group">
-            <div class="bar-label">
-              <span id="hud-blue-hp-val">100%</span>
-              <span>LOVE HP ♥</span>
+            <div class="bar-frame bar-frame-right">
+              <div class="bar-track bar-hp bar-hp-right">
+                <div id="hud-blue-hp-trail" class="bar-trail bar-trail-right" style="width: 100%"></div>
+                <div id="hud-blue-hp" class="bar-fill fill-blue" style="width: 100%"></div>
+              </div>
             </div>
-            <div class="bar-track bar-hp bar-hp-right">
-              <div id="hud-blue-hp-trail" class="bar-trail bar-trail-right" style="width: 100%"></div>
-              <div id="hud-blue-hp" class="bar-fill fill-blue" style="width: 100%"></div>
-            </div>
-            <div class="bar-label super-label-row">
-              <span id="hud-blue-super-val">0%</span>
-              <span>SPECIAL SUPER ✨</span>
-            </div>
-            <div class="bar-track bar-super">
-              <div id="hud-blue-super" class="bar-fill fill-super fill-super-right" style="width: 0%"></div>
+            <div class="super-row">
+              <div class="bar-label super-label-row">
+                <span id="hud-blue-super-val" class="super-val">0%</span>
+                <span>SPECIAL SUPER ✨</span>
+              </div>
+              <div class="bar-frame bar-frame-super bar-frame-right">
+                <div class="bar-track bar-super">
+                  <div id="hud-blue-super" class="bar-fill fill-super fill-super-right" style="width: 0%"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -285,10 +318,12 @@
       <div class="stage-wrap">
         <canvas id="game-canvas" width="960" height="540"></canvas>
 
-        <!-- Center Banner Overlay -->
+        <!-- Center Arcade Banner Overlay -->
         <div id="stage-banner" class="stage-banner hidden">
-          <div id="stage-banner-main" class="banner-main">FIGHT!</div>
-          <div id="stage-banner-sub" class="banner-sub">BEATDOWN SESH!</div>
+          <div class="banner-ribbon">
+            <div id="stage-banner-main" class="banner-main">FIGHT!</div>
+            <div id="stage-banner-sub" class="banner-sub">BEATDOWN SESH!</div>
+          </div>
         </div>
 
         <!-- Match Over Modal Overlay -->
@@ -298,7 +333,7 @@
             <h2 id="match-winner-title">WIFEBUN WINS!</h2>
             <p id="match-winner-sub">Final Score: 2 - 0</p>
             <div class="match-actions">
-              <button id="btn-rematch" class="btn btn-red btn-lg">Rematch 💕</button>
+              <button id="btn-rematch" class="btn btn-red btn-lg btn-sheen">Rematch 💕</button>
               <button id="btn-back-lobby" class="btn btn-ghost btn-lg">Back to Lobby</button>
             </div>
             <p id="rematch-status" class="hint-text hidden"></p>
