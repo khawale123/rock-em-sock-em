@@ -446,7 +446,7 @@ export class NetworkManager {
     this._publishHostReady(client);
     this._startHostHeartbeat();
 
-    this._emitStatus(`Waiting for Wifebun to hop in... (${chosenBroker.name})`, { phase: 'waiting' });
+    this._emitStatus(`Waiting for Wifebun to join... (${chosenBroker.name})`, { phase: 'waiting' });
     return this.roomCode;
   }
 
@@ -705,7 +705,7 @@ export class NetworkManager {
 
       if (savedRole === 'host' && !this.connected) {
         this._publishHostReady(freshClient);
-        this._emitStatus(`Waiting for Wifebun to hop in... (${savedBroker.name})`, {
+        this._emitStatus(`Waiting for Wifebun to join... (${savedBroker.name})`, {
           phase: 'waiting',
           reconnecting: false,
         });
@@ -714,7 +714,7 @@ export class NetworkManager {
         this._rawPublish({ type: 'join', senderId: this.clientId, profile: this._profile });
         this._emitStatus(
           this._hostSeen
-            ? `Found ${this._hostName}'s match! Connecting...`
+            ? `Found ${this._hostName}'s room! Connecting...`
             : `Connected (${savedBroker.name}) — waiting for Husbun...`,
           { phase: 'waiting', reconnecting: false }
         );
@@ -742,7 +742,7 @@ export class NetworkManager {
         if (this.client !== client || this._intentionalDisconnect) return;
         if (this.role === 'host' && !this.connected) {
           this._publishHostReady(client);
-          this._emitStatus(`Waiting for Wifebun to hop in... (${this.getRelayName()})`, {
+          this._emitStatus(`Waiting for Wifebun to join... (${this.getRelayName()})`, {
             phase: 'waiting',
             reconnecting: false,
           });
@@ -751,7 +751,7 @@ export class NetworkManager {
           this._rawPublish({ type: 'join', senderId: this.clientId, profile: this._profile });
           this._emitStatus(
             this._hostSeen
-              ? `Found ${this._hostName}'s match! Connecting...`
+              ? `Found ${this._hostName}'s room! Connecting...`
               : `Connected (${this.getRelayName()}) — waiting for Husbun...`,
             { phase: 'waiting', reconnecting: false }
           );
@@ -801,7 +801,7 @@ export class NetworkManager {
         if (this.role === 'guest' && !this.connected) {
           this._hostSeen = true;
           this._hostName = msg.hostName || 'Husbun';
-          this._emitStatus(`Husbun found! Starting match...`, { phase: 'handshake' });
+          this._emitStatus(`Found ${this._hostName}'s room! Entering lobby...`, { phase: 'handshake' });
           // Nudge Host immediately
           this._rawPublish({ type: 'join', senderId: this.clientId, profile: this._profile });
         }
@@ -839,7 +839,7 @@ export class NetworkManager {
       if (msg.type === 'leave') {
         this.connected = false;
         this._stopPing();
-        this._emitStatus('Opponent left the match.', { phase: 'disconnected' });
+        this._emitStatus('Partner left the room.', { phase: 'disconnected' });
         if (this.handlers.onDisconnect) this.handlers.onDisconnect();
         return;
       }
@@ -862,7 +862,7 @@ export class NetworkManager {
         this._startPing();
 
         if (firstConnect) {
-          this._emitStatus('Wifebun connected! Starting match...', { phase: 'playing' });
+          this._emitStatus('Wifebun joined the room!', { phase: 'connected' });
           if (this.handlers.onConnect) this.handlers.onConnect('host');
         }
         if (this.handlers.onMessage) {
@@ -871,7 +871,7 @@ export class NetworkManager {
         return;
       }
 
-      if (this.role === 'guest' && msg.type === 'start') {
+      if (this.role === 'guest' && (msg.type === 'room_joined' || msg.type === 'start')) {
         const firstConnect = !this.connected;
         this.peerId = msg.senderId;
         this.connected = true;
@@ -886,7 +886,7 @@ export class NetworkManager {
           ack();
         }
         if (firstConnect) {
-          this._emitStatus('Husbun found! Starting match...', { phase: 'playing' });
+          this._emitStatus(`Connected to ${this._hostName}'s room!`, { phase: 'connected' });
           if (this.handlers.onConnect) this.handlers.onConnect('guest');
         }
         if (this.handlers.onMessage) this.handlers.onMessage(msg);

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Wifebun ♥ Husbun — Beatdown Sesh</title>
+  <title>Wifebun ♥ Husbun — Date Night Arcade</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Chakra+Petch:ital,wght@0,500;0,600;0,700;1,700&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet" />
@@ -28,39 +28,21 @@
   </div>
 
   <div id="app" class="app-shell">
-    <!-- Unified Top Bar with Always-Accessible Quick Mode Switcher -->
+    <!-- Slim Top Header: Brand · Live Room Status Chip · Profile · Sound -->
     <header class="top-bar">
-      <div class="brand" id="brand-home" title="Back to Lobby">
+      <div class="brand" id="brand-home" title="Go to Room Lobby">
         <span class="brand-badge">💕</span>
         <span class="brand-title">WIFEBUN <span class="accent-vs">♥</span> <span class="accent-blue">HUSBUN</span></span>
+        <span class="brand-sub hide-sm">DATE NIGHT ARCADE</span>
       </div>
 
-      <!-- 1-Click Quick Mode Switcher (Accessible from Lobby & Mid-Match) -->
-      <nav id="mode-switcher" class="mode-switcher" aria-label="Quick Mode Switcher">
-        <button type="button" id="nav-lobby" class="nav-pill active" data-nav="lobby" title="Return to Lobby">
-          <span class="nav-ico" aria-hidden="true">🏠</span>
-          <span class="nav-txt">Lobby</span>
-        </button>
-        <button type="button" id="nav-online" class="nav-pill nav-pill-online" data-nav="online" title="Online 1v1 Match">
-          <span class="nav-ico" aria-hidden="true">💌</span>
-          <span class="nav-txt">Online<span class="hide-xs"> 1v1</span></span>
-          <span id="nav-online-dot" class="nav-live-dot hidden" aria-hidden="true"></span>
-        </button>
-        <button type="button" id="nav-wifebun" class="nav-pill nav-pill-pink" data-nav="wifebun" title="1-Click Warmup as Wifebun vs CPU">
-          <span class="nav-ico" aria-hidden="true">🎀</span>
-          <span class="nav-txt"><span class="hide-xs">Play </span>Wifebun</span>
-        </button>
-        <button type="button" id="nav-husbun" class="nav-pill nav-pill-blue" data-nav="husbun" title="1-Click Warmup as Husbun vs CPU">
-          <span class="nav-ico" aria-hidden="true">💪</span>
-          <span class="nav-txt"><span class="hide-xs">Play </span>Husbun</span>
-        </button>
-        <button type="button" id="nav-local" class="nav-pill nav-pill-local" data-nav="local" title="1-Click Couch Local 2-Player">
-          <span class="nav-ico" aria-hidden="true">🎮</span>
-          <span class="nav-txt"><span class="hide-xs">Local </span>2P</span>
-        </button>
-      </nav>
-
       <div class="top-controls">
+        <!-- Always-Visible Live Room Status Chip -->
+        <button type="button" id="room-status-chip" class="room-status-chip state-idle" title="Gaming Room Status">
+          <span id="room-chip-dot" class="chip-dot hidden" aria-hidden="true"></span>
+          <span id="room-chip-text">💌 Create Room</span>
+        </button>
+
         <div id="user-pill" class="user-pill">
           <div id="user-avatar" class="avatar">🐰</div>
           <div class="user-meta">
@@ -79,81 +61,150 @@
       </div>
     </header>
 
-    <!-- LOBBY SCREEN (All 8 signature moves stay hidden as a surprise until entering the ring!) -->
+    <!-- Unified 6-Tab Game Navigation Bar -->
+    <nav id="game-tabs" class="game-tabs" aria-label="Arcade Games">
+      <button type="button" class="game-tab active" data-game="lobby">
+        <span class="tab-ico" aria-hidden="true">🏠</span>
+        <span class="tab-txt">Room Lobby</span>
+      </button>
+      <button type="button" class="game-tab" data-game="fighter">
+        <span class="tab-ico" aria-hidden="true">🥊</span>
+        <span class="tab-txt">Beatdown Sesh</span>
+      </button>
+      <button type="button" class="game-tab" data-game="air-hockey">
+        <span class="tab-ico" aria-hidden="true">🏓</span>
+        <span class="tab-txt">Air Hockey</span>
+      </button>
+      <button type="button" class="game-tab" data-game="quick-draw">
+        <span class="tab-ico" aria-hidden="true">⚡</span>
+        <span class="tab-txt">Quick-Draw</span>
+      </button>
+      <button type="button" class="game-tab" data-game="heart-catch">
+        <span class="tab-ico" aria-hidden="true">🎯</span>
+        <span class="tab-txt">Heart Catch</span>
+      </button>
+      <button type="button" class="game-tab" data-game="connect-four">
+        <span class="tab-ico" aria-hidden="true">🔴</span>
+        <span class="tab-txt">Connect 4</span>
+      </button>
+    </nav>
+
+    <!-- =====================================
+         SCREEN 1: PERSISTENT GAMING ROOM LOBBY
+         (All 8 Beatdown Sesh move names stay hidden as a surprise!)
+         ===================================== -->
     <main id="screen-lobby" class="screen active">
       <section class="lobby-hero">
-        <div class="hero-tag">🌸 MOONLIT PARISIAN 1v1 FIGHTER 🌸</div>
+        <div class="hero-tag">🌸 1v1 DATE NIGHT ARCADE · 5 GAMES IN 1 ROOM 🌸</div>
         <h1 class="hero-title">
           <span class="text-pink">WIFEBUN</span>
           <span class="hero-vs">♥</span>
           <span class="text-blue">HUSBUN</span>
-          <span class="hero-sub-title">BEATDOWN SESH</span>
+          <span class="hero-sub-title">GAMING ROOM</span>
         </h1>
-        <p class="hero-subtitle">A flirty moonlit showdown — charge your Romance Super &amp; step into the ring to unveil your secret moves.</p>
-
-        <!-- Slim Fighter Role Strip (No move spoilers!) -->
-        <div class="duo-strip">
-          <div class="duo-chip duo-wifebun">
-            <span class="duo-emoji">🎀🐰</span>
-            <div class="duo-info">
-              <strong>WIFEBUN</strong>
-              <span class="role-chip chip-pink">INVITED PLAYER</span>
-            </div>
-          </div>
-          <div class="duo-vs" aria-hidden="true">♥</div>
-          <div class="duo-chip duo-husbun">
-            <div class="duo-info duo-info-right">
-              <strong>HUSBUN</strong>
-              <span class="role-chip chip-blue">MATCH HOST</span>
-            </div>
-            <span class="duo-emoji">💪🐰</span>
-          </div>
-        </div>
+        <p class="hero-subtitle">Create a private room, invite Wifebun, and hop between all 5 romantic 1v1 games together — or jump right into solo warmup anytime.</p>
       </section>
 
-      <!-- Symmetrical 2-Column Lobby Cards -->
-      <div class="lobby-grid">
-        <!-- Primary Card: Online 1v1 -->
-        <section id="card-online" class="card card-primary">
-          <div class="card-header">
-            <span class="card-pill pill-red">💌 ONLINE 1v1</span>
-            <h2>Invite Wifebun to Play</h2>
+      <div class="lobby-workspace">
+        <!-- LEFT PANEL: PERSISTENT GAMING ROOM & LIVE PLAYER ROSTER -->
+        <section id="card-online" class="card card-primary room-panel">
+          <div class="room-panel-head">
+            <div class="room-head-left">
+              <span class="card-pill pill-red">💌 PRIVATE GAMING ROOM</span>
+              <span id="waiting-relay-badge" class="relay-chip hidden"></span>
+            </div>
+            <span id="room-occupancy-pill" class="occupancy-pill">Solo Mode</span>
           </div>
 
-          <!-- Idle: Create or Join -->
-          <div id="online-idle" class="online-panel">
-            <p class="role-note">Host plays <strong>Husbun 💪</strong> &bull; Invited player auto-joins as <strong>Wifebun 🎀</strong></p>
-
-            <div class="rounds-row">
-              <label for="rounds-selector">Match Format</label>
-              <div class="segmented" id="rounds-selector">
-                <button type="button" class="seg-btn" data-rounds="1">1 Round</button>
-                <button type="button" class="seg-btn active" data-rounds="3">Best of 3</button>
-                <button type="button" class="seg-btn" data-rounds="5">Best of 5</button>
+          <!-- LIVE PLAYER ROSTER (Husbun & Wifebun Slots) -->
+          <div class="roster-grid">
+            <!-- Husbun Slot (Host / Room Creator) -->
+            <div id="roster-husbun" class="roster-card roster-husbun">
+              <div id="emote-pop-blue" class="emote-pop-anchor" aria-live="polite"></div>
+              <div class="roster-card-top">
+                <div id="roster-husbun-avatar" class="avatar avatar-blue roster-avatar">💪</div>
+                <div class="roster-identity">
+                  <div class="roster-name-row">
+                    <strong id="roster-husbun-name" class="roster-name">Husbun</strong>
+                    <span id="roster-husbun-you" class="you-tag you-tag-blue">YOU</span>
+                  </div>
+                  <div class="roster-pills">
+                    <span class="role-chip chip-blue">HOST</span>
+                    <span class="wins-chip" id="roster-husbun-wins">🏆 0</span>
+                  </div>
+                </div>
+              </div>
+              <div id="roster-husbun-status" class="roster-status status-ready">
+                <span class="status-dot"></span>
+                <span id="roster-husbun-status-text">Ready to Host</span>
               </div>
             </div>
 
+            <!-- Wifebun Slot (Invited Partner) -->
+            <div id="roster-wifebun" class="roster-card roster-wifebun">
+              <div id="emote-pop-red" class="emote-pop-anchor" aria-live="polite"></div>
+              <div class="roster-card-top">
+                <div id="roster-wifebun-avatar" class="avatar avatar-red roster-avatar">🎀</div>
+                <div class="roster-identity">
+                  <div class="roster-name-row">
+                    <strong id="roster-wifebun-name" class="roster-name">Wifebun</strong>
+                    <span id="roster-wifebun-you" class="you-tag hidden">YOU</span>
+                  </div>
+                  <div class="roster-pills">
+                    <span class="role-chip chip-pink">INVITED</span>
+                    <span class="wins-chip" id="roster-wifebun-wins">🏆 0</span>
+                  </div>
+                </div>
+              </div>
+              <div id="roster-wifebun-status" class="roster-status status-empty">
+                <span class="status-dot"></span>
+                <span id="roster-wifebun-status-text">Not invited yet — create a room!</span>
+              </div>
+              <div id="roster-wifebun-invited-email" class="invited-email-tag hidden"></div>
+            </div>
+          </div>
+
+          <!-- MULTI-GAME SESSION SCOREBOARD -->
+          <div class="session-score-bar" aria-label="Session Scoreboard">
+            <span class="score-side score-red">🎀 Wifebun <strong id="session-score-red">0</strong></span>
+            <span class="score-mid">SESSION ♥ SCORE</span>
+            <span class="score-side score-blue"><strong id="session-score-blue">0</strong> Husbun 💪</span>
+          </div>
+
+          <!-- QUICK ROOM EMOTES BAR (Visible when both players are connected 2/2!) -->
+          <div id="room-emotes-bar" class="room-emotes-bar hidden">
+            <span class="emotes-label">Send Emote</span>
+            <div class="emote-btns">
+              <button type="button" class="emote-btn" data-emote="💕" title="Send 💕">💕</button>
+              <button type="button" class="emote-btn" data-emote="😘" title="Send 😘">😘</button>
+              <button type="button" class="emote-btn" data-emote="🔥" title="Send 🔥">🔥</button>
+              <button type="button" class="emote-btn" data-emote="🐰" title="Send 🐰">🐰</button>
+            </div>
+            <button type="button" id="btn-leave-room" class="btn btn-ghost btn-xs">Leave Room</button>
+          </div>
+
+          <!-- ROOM STATE 1: IDLE (Create or Join) -->
+          <div id="online-idle" class="online-panel">
             <button id="btn-create-room" class="btn btn-red btn-lg btn-full btn-sheen">
-              <span class="btn-icon">💌</span> Create 1v1 Match &amp; Invite Link
+              <span class="btn-icon">💌</span> Create Gaming Room &amp; Invite Link
             </button>
 
-            <div class="divider"><span>OR JOIN AS WIFEBUN WITH CODE</span></div>
+            <div class="divider"><span>OR JOIN PARTNER'S ROOM WITH CODE</span></div>
 
             <form id="form-join-room" class="join-row">
-              <input id="input-room-code" type="text" maxlength="8" placeholder="MATCH CODE" autocomplete="off" />
+              <input id="input-room-code" type="text" maxlength="8" placeholder="ROOM CODE" autocomplete="off" />
               <button type="submit" class="btn btn-blue">Join as Wifebun</button>
             </form>
           </div>
 
-          <!-- Waiting: Share Invite Link / Code / Gmail -->
+          <!-- ROOM STATE 2: WAITING FOR WIFEBUN (Invite Link · Code · Share · Gmail) -->
           <div id="online-waiting" class="online-panel hidden">
             <div class="room-code-box">
               <div class="room-box-top">
                 <span class="room-label">INVITE LINK — AUTO-JOINS AS WIFEBUN 🎀</span>
-                <span id="waiting-relay-badge" class="relay-chip hidden"></span>
               </div>
               <div class="share-link-row">
-                <input id="input-invite-link" type="text" readonly value="" aria-label="Match invite link" />
+                <input id="input-invite-link" type="text" readonly value="" aria-label="Room invite link" />
                 <button id="btn-copy-link" class="btn btn-blue btn-sm" type="button">Copy Link</button>
               </div>
               <div class="room-code-display">
@@ -165,7 +216,7 @@
               </div>
               <div class="status-pulse">
                 <span class="dot"></span>
-                <span id="waiting-status">Waiting for Wifebun to hop in...</span>
+                <span id="waiting-status">Waiting for Wifebun to join...</span>
               </div>
             </div>
 
@@ -180,13 +231,13 @@
               </div>
             </div>
 
-            <button id="btn-cancel-room" class="btn btn-ghost btn-sm btn-full">Cancel Match</button>
+            <button id="btn-cancel-room" class="btn btn-ghost btn-sm btn-full">Close Room</button>
           </div>
 
-          <!-- Joining: Live Status & Retry -->
+          <!-- ROOM STATE 3: JOINING PARTNER'S ROOM -->
           <div id="online-joining" class="online-panel hidden">
             <div class="room-code-box">
-              <span class="room-label">JOINING ONLINE 1v1 AS WIFEBUN 🎀</span>
+              <span class="room-label">JOINING ROOM AS WIFEBUN 🎀</span>
               <div class="status-pulse joining-pulse">
                 <span id="joining-dot" class="dot"></span>
                 <span id="joining-status">Connecting to Husbun...</span>
@@ -197,89 +248,171 @@
               <button id="btn-cancel-join" class="btn btn-ghost btn-full" type="button">Cancel</button>
             </div>
           </div>
+
+          <!-- ROOM STATE 4: CONNECTED 2/2 IN ROOM LOBBY -->
+          <div id="online-connected" class="online-panel hidden">
+            <div class="connected-banner">
+              <div class="connected-banner-top">
+                <span class="connected-title">💕 Room <strong id="connected-room-code">------</strong> Live!</span>
+                <span id="connected-ping-badge" class="relay-chip">● Connected</span>
+              </div>
+              <p class="connected-sub">Both bunnies are online! Click any game on the right (or in the tabs above) to launch together.</p>
+            </div>
+          </div>
         </section>
 
-        <!-- Secondary Card: Instant Play (Solo Warmup & Local 2P) -->
-        <section id="card-quickplay" class="card card-secondary">
-          <div class="card-header">
-            <span class="card-pill pill-blue">✨ INSTANT PLAY</span>
-            <h2>Warmup &amp; Couch 2P</h2>
+        <!-- RIGHT PANEL: 5-GAME ARCADE LAUNCHER -->
+        <section id="arcade-launcher" class="card card-secondary arcade-panel">
+          <div class="arcade-panel-head">
+            <div>
+              <span class="card-pill pill-blue">🕹️ 5-GAME ARCADE</span>
+              <h2 id="arcade-heading">Pick a Game to Play</h2>
+            </div>
+            <span id="arcade-mode-hint" class="arcade-mode-hint">Solo vs CPU · Local 2P · Online 1v1</span>
           </div>
 
-          <div class="quick-modes">
-            <div class="mode-block">
-              <div class="mode-block-head">
-                <h3>Solo Warmup vs. CPU</h3>
-                <span class="mode-sub">Pick your bunny &amp; jump straight in</span>
-              </div>
-
-              <div class="warmup-quick-row">
-                <button type="button" class="btn btn-red btn-warmup-side" data-side="wifebun">🎀 Play Wifebun</button>
-                <button type="button" class="btn btn-blue btn-warmup-side" data-side="husbun">💪 Play Husbun</button>
-              </div>
-
-              <div class="diff-group">
-                <span class="diff-label">CPU Skill</span>
-                <div class="segmented" id="cpu-diff-selector">
-                  <button type="button" class="seg-btn btn-diff" data-diff="easy">Easy</button>
-                  <button type="button" class="seg-btn btn-diff active" data-diff="medium">Medium</button>
-                  <button type="button" class="seg-btn btn-diff" data-diff="hard">Tough</button>
+          <div class="game-cards-grid">
+            <button type="button" class="game-card game-card-featured" data-launch-game="fighter">
+              <div class="game-card-ico">🥊</div>
+              <div class="game-card-body">
+                <div class="game-card-title-row">
+                  <strong>Beatdown Sesh</strong>
+                  <span class="game-badge badge-gold">2D FIGHTER</span>
                 </div>
+                <p>Moonlit Parisian showdown with Romance Super &amp; secret signature moves!</p>
+              </div>
+              <span class="game-card-cta" data-cta-text>Play ▶</span>
+            </button>
+
+            <button type="button" class="game-card" data-launch-game="air-hockey">
+              <div class="game-card-ico">🏓</div>
+              <div class="game-card-body">
+                <div class="game-card-title-row">
+                  <strong>Neon Air Hockey</strong>
+                  <span class="game-badge badge-pink">FIRST TO 5</span>
+                </div>
+                <p>60fps rose-gold glowing rink! Drag or use keys to smash the heart puck.</p>
+              </div>
+              <span class="game-card-cta" data-cta-text>Play ▶</span>
+            </button>
+
+            <button type="button" class="game-card" data-launch-game="quick-draw">
+              <div class="game-card-ico">⚡</div>
+              <div class="game-card-body">
+                <div class="game-card-title-row">
+                  <strong>Quick-Draw Smooch</strong>
+                  <span class="game-badge badge-gold">BEST OF 5</span>
+                </div>
+                <p>Hold your nerve until DRAW!! — fastest reaction blasts a giant smooch!</p>
+              </div>
+              <span class="game-card-cta" data-cta-text>Play ▶</span>
+            </button>
+
+            <button type="button" class="game-card" data-launch-game="heart-catch">
+              <div class="game-card-ico">🎯</div>
+              <div class="game-card-body">
+                <div class="game-card-title-row">
+                  <strong>Heart Catch Rush</strong>
+                  <span class="game-badge badge-pink">30s RUSH</span>
+                </div>
+                <p>Dash under the moonlit sky to catch golden hearts &amp; dodge storm clouds!</p>
+              </div>
+              <span class="game-card-cta" data-cta-text>Play ▶</span>
+            </button>
+
+            <button type="button" class="game-card" data-launch-game="connect-four">
+              <div class="game-card-ico">🔴</div>
+              <div class="game-card-body">
+                <div class="game-card-title-row">
+                  <strong>Bunny Connect 4</strong>
+                  <span class="game-badge badge-blue">STRATEGY</span>
+                </div>
+                <p>Drop glossy pink &amp; blue bunny discs — outsmart your partner for 4 in a row!</p>
+              </div>
+              <span class="game-card-cta" data-cta-text>Play ▶</span>
+            </button>
+          </div>
+
+          <!-- Compact Settings Strip: Solo Default + Beatdown Sesh Format -->
+          <div class="arcade-settings-strip">
+            <div class="setting-group" id="solo-mode-group">
+              <span class="setting-label">Solo / Couch</span>
+              <div class="mini-segmented" id="lobby-solo-selector">
+                <button type="button" class="mini-seg-btn active" data-solomode="cpu">vs CPU</button>
+                <button type="button" class="mini-seg-btn" data-solomode="local">Local 2P</button>
               </div>
             </div>
-
-            <div class="mode-block mode-block-local">
-              <div class="mode-block-head">
-                <h3>Couch Local 2-Player</h3>
-                <span class="mode-sub">Same keyboard — Wifebun vs. Husbun</span>
+            <div class="setting-group">
+              <span class="setting-label">Beatdown Format</span>
+              <div class="mini-segmented" id="rounds-selector">
+                <button type="button" class="mini-seg-btn seg-btn" data-rounds="1">1R</button>
+                <button type="button" class="mini-seg-btn seg-btn active" data-rounds="3">Bo3</button>
+                <button type="button" class="mini-seg-btn seg-btn" data-rounds="5">Bo5</button>
               </div>
-              <button id="btn-local-2p" type="button" class="btn btn-dark btn-full">🎮 Play Local 2P</button>
             </div>
           </div>
         </section>
       </div>
 
-      <!-- Collapsible Controls & Rules Drawer (Keeps Lobby Uncluttered!) -->
+      <!-- Collapsible Controls & Rules Drawer (Spoiler-Free!) -->
       <details id="rules-drawer" class="rules-drawer">
         <summary class="rules-summary">
-          <span>📖 Controls &amp; Combat Rules</span>
+          <span>📖 Controls &amp; Arcade Quick Guide</span>
           <span class="rules-chevron" aria-hidden="true">▾</span>
         </summary>
         <div class="rules-content">
           <div class="rules-col">
-            <h4>♥ COMBAT RULES</h4>
+            <h4>🥊 BEATDOWN SESH RULES</h4>
             <ul>
               <li><strong>Move &amp; Jump</strong>: <kbd>A</kbd><kbd>D</kbd> (or <kbd>←</kbd><kbd>→</kbd>) to run, <kbd>W</kbd> (or <kbd>↑</kbd>) to jump.</li>
               <li><strong>Dodge</strong> (<kbd>Space</kbd> / <kbd>Shift</kbd>): <strong>0 damage</strong> with afterimages + fills Super!</li>
               <li><strong>Guard</strong> (<kbd>S</kbd> / <kbd>↓</kbd>): Tiny chip damage &amp; <strong>rapidly charges Special Super</strong>!</li>
-              <li><strong>Special Super</strong> (<kbd>U</kbd> / <kbd>4</kbd>): Charges over time &amp; on blocks — unleash at <strong>100%</strong>!</li>
+              <li><strong>Moves &amp; Super</strong>: <kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>U</kbd> or <kbd>1</kbd>–<kbd>4</kbd> (step in to discover all secret moves!).</li>
             </ul>
           </div>
           <div class="rules-col">
-            <h4>🎮 KEYBOARD LAYOUTS</h4>
+            <h4>🕹️ MINIGAME CONTROLS</h4>
             <ul>
-              <li><strong>Solo / Online 1v1</strong>: Move with <kbd>WASD</kbd> or <kbd>Arrows</kbd>, Dodge <kbd>Space</kbd>, Moves <kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>U</kbd> or <kbd>1</kbd>–<kbd>4</kbd>.</li>
-              <li><strong>Local 2P — Wifebun</strong>: <kbd>A</kbd><kbd>D</kbd> Move, <kbd>W</kbd> Jump, <kbd>S</kbd> Guard, <kbd>Q</kbd> Dodge, <kbd>1</kbd>–<kbd>4</kbd> Moves.</li>
-              <li><strong>Local 2P — Husbun</strong>: <kbd>←</kbd><kbd>→</kbd> Move, <kbd>↑</kbd> Jump, <kbd>↓</kbd> Guard, <kbd>Shift</kbd> Dodge, <kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>U</kbd> Moves.</li>
+              <li><strong>🏓 Air Hockey</strong>: Drag with mouse/touch or move with <kbd>WASD</kbd> / <kbd>Arrows</kbd>.</li>
+              <li><strong>⚡ Quick-Draw</strong>: Wait for <strong>DRAW!!</strong>, then press <kbd>Space</kbd> or tap the Smooch button!</li>
+              <li><strong>🎯 Heart Catch</strong>: Move with <kbd>A</kbd><kbd>D</kbd> / <kbd>←</kbd><kbd>→</kbd> or drag; <kbd>Space</kbd> to speed dash!</li>
+              <li><strong>🔴 Connect 4</strong>: Click/tap any column or press <kbd>1</kbd>–<kbd>7</kbd> to drop your bunny disc.</li>
             </ul>
           </div>
         </div>
       </details>
     </main>
 
-    <!-- GAME ARENA SCREEN -->
+    <!-- =====================================
+         SCREEN 2: BEATDOWN SESH (2D FIGHTER)
+         ===================================== -->
     <main id="screen-game" class="screen">
-      <!-- Slim Contextual Warmup Bar (Instant Bunny Swap & CPU Difficulty Mid-Match!) -->
-      <div id="arena-warmup-bar" class="arena-warmup-bar hidden">
-        <div class="arena-warmup-left">
-          <span class="arena-tag">✨ WARMUP VS CPU</span>
-          <div class="arena-diff-pills" id="arena-diff-selector" role="group" aria-label="CPU Difficulty">
-            <button type="button" class="mini-pill btn-arena-diff" data-diff="easy">Easy</button>
-            <button type="button" class="mini-pill btn-arena-diff active" data-diff="medium">Medium</button>
-            <button type="button" class="mini-pill btn-arena-diff" data-diff="hard">Tough</button>
+      <!-- Slim 1-Line Mode Bar (Online 1v1 OR Solo vs CPU / Local 2P) -->
+      <div id="arena-mode-bar" class="mode-bar">
+        <div class="mode-bar-left">
+          <span id="arena-online-pill" class="mode-online-pill hidden">
+            <span class="live-dot"></span>
+            <span id="arena-online-label">Online 1v1</span>
+          </span>
+
+          <div id="arena-solo-controls" class="mode-solo-controls">
+            <div class="arena-diff-pills" id="arena-playmode-selector" role="group" aria-label="Play Mode">
+              <button type="button" class="mini-pill btn-arena-playmode active" data-playmode="cpu">vs CPU</button>
+              <button type="button" class="mini-pill btn-arena-playmode" data-playmode="local">Local 2P</button>
+            </div>
+            <div class="arena-diff-pills" id="arena-diff-selector" role="group" aria-label="CPU Difficulty">
+              <button type="button" class="mini-pill btn-arena-diff" data-diff="easy">Easy</button>
+              <button type="button" class="mini-pill btn-arena-diff active" data-diff="medium">Med</button>
+              <button type="button" class="mini-pill btn-arena-diff" data-diff="hard">Tough</button>
+            </div>
+            <button type="button" id="btn-arena-switch-bunny" class="mini-pill mini-pill-swap">⇄ Play Husbun</button>
           </div>
         </div>
-        <button type="button" id="btn-arena-switch-bunny" class="mini-pill mini-pill-swap">⇄ Switch Bunny</button>
+
+        <div class="mode-bar-right">
+          <button type="button" id="btn-arena-invite" class="mini-pill mini-pill-invite">💌 Invite Wifebun (1v1)</button>
+          <button type="button" id="btn-arena-room-lobby" class="mini-pill mini-pill-lobby hidden">🏠 Room Lobby</button>
+        </div>
       </div>
 
       <!-- Capcom / Guilty Gear Fighting-Game HUD -->
@@ -398,7 +531,8 @@
             <div class="match-actions">
               <button id="btn-rematch" class="btn btn-red btn-sheen">Rematch 💕</button>
               <button id="btn-switch-bunny" class="btn btn-blue hidden">⇄ Switch Bunny</button>
-              <button id="btn-back-lobby" class="btn btn-ghost">Lobby</button>
+              <button id="btn-fighter-next-game" class="btn btn-outline">🎲 Next Game</button>
+              <button id="btn-back-lobby" class="btn btn-ghost">🏠 Room Lobby</button>
             </div>
             <p id="rematch-status" class="hint-text hidden"></p>
           </div>
@@ -457,7 +591,59 @@
           </button>
         </div>
 
-        <button type="button" id="btn-exit-match" class="btn btn-ghost btn-sm exit-btn-inline">Leave</button>
+        <button type="button" id="btn-exit-match" class="btn btn-ghost btn-sm exit-btn-inline">Lobby</button>
+      </div>
+    </main>
+
+    <!-- =====================================
+         SCREEN 3: SHARED MINIGAME ARENA
+         (Air Hockey · Quick-Draw · Heart Catch · Connect 4)
+         ===================================== -->
+    <main id="screen-minigame" class="screen">
+      <!-- Slim Top Bar for Active Minigame -->
+      <div id="minigame-bar" class="mode-bar minigame-bar">
+        <div class="mode-bar-left">
+          <strong id="mg-title" class="mg-title">🏓 Air Hockey</strong>
+
+          <span id="mg-online-pill" class="mode-online-pill hidden">
+            <span class="live-dot"></span>
+            <span id="mg-online-label">Online 1v1</span>
+          </span>
+
+          <div id="mg-solo-controls" class="mode-solo-controls">
+            <div class="arena-diff-pills" id="mg-playmode-selector" role="group" aria-label="Minigame Mode">
+              <button type="button" class="mini-pill btn-mg-playmode active" data-playmode="cpu">vs CPU</button>
+              <button type="button" class="mini-pill btn-mg-playmode" data-playmode="local">Local 2P</button>
+            </div>
+            <button type="button" id="mg-btn-invite" class="mini-pill mini-pill-invite">💌 Invite Wifebun (1v1)</button>
+          </div>
+        </div>
+
+        <div class="mode-bar-right">
+          <button type="button" id="mg-btn-restart" class="mini-pill mini-pill-swap">🔄 Restart</button>
+          <button type="button" id="mg-btn-lobby" class="mini-pill mini-pill-lobby">🏠 Room Lobby</button>
+        </div>
+      </div>
+
+      <!-- Responsive Minigame Stage + Shared Game-Over Overlay -->
+      <div id="minigame-stage-wrap" class="minigame-stage-wrap">
+        <div id="minigame-mount" class="minigame-mount"></div>
+
+        <!-- Shared Winner Celebration Overlay -->
+        <div id="minigame-overlay" class="match-overlay hidden">
+          <div class="match-card">
+            <div id="mg-result-badge" class="result-badge">💕 GAME COMPLETE! 💕</div>
+            <h2 id="mg-winner-title">WIFEBUN WINS!</h2>
+            <p id="mg-winner-sub">Wifebun 5 - 3 Husbun</p>
+            <div id="mg-session-score" class="mg-overlay-session">Session: Wifebun 0 ♥ 0 Husbun</div>
+            <div class="match-actions">
+              <button type="button" id="mg-btn-rematch" class="btn btn-red btn-sheen">🔄 Play Again</button>
+              <button type="button" id="mg-btn-next-game" class="btn btn-blue">🎲 Next Game</button>
+              <button type="button" id="mg-btn-overlay-lobby" class="btn btn-ghost">🏠 Room Lobby</button>
+            </div>
+            <p id="mg-rematch-status" class="hint-text hidden"></p>
+          </div>
+        </div>
       </div>
     </main>
 
