@@ -113,26 +113,45 @@ export class AuthManager {
   }
 
   buildInviteUrl(roomCode) {
-    const url = new URL(window.location.href);
+    const cleanCode = (roomCode || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const CANONICAL_PROD_BASE = 'https://khawale123.github.io/rock-em-sock-em/';
+
+    let url;
+    try {
+      const current = new URL(window.location.href);
+      if (current.protocol === 'http:' || current.protocol === 'https:') {
+        // Strip index.html, cache-buster query params (?v=...), and hash fragments
+        const cleanPath = current.pathname.replace(/\/index\.html$/i, '/');
+        url = new URL(cleanPath.endsWith('/') ? cleanPath : cleanPath + '/', current.origin);
+      } else {
+        url = new URL(CANONICAL_PROD_BASE);
+      }
+    } catch (_) {
+      url = new URL(CANONICAL_PROD_BASE);
+    }
+
     url.search = '';
     url.hash = '';
-    url.searchParams.set('room', roomCode);
+    if (cleanCode) {
+      url.searchParams.set('room', cleanCode);
+    }
     return url.toString();
   }
 
   buildGmailInviteUrl(friendEmail, roomCode) {
-    const inviteUrl = this.buildInviteUrl(roomCode);
-    const sender = this.profile.name || 'Your bunny';
+    const cleanCode = (roomCode || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const inviteUrl = this.buildInviteUrl(cleanCode);
+    const sender = this.profile.name || 'Husbun';
     const subject = `🐰🥊 ${sender} invited you to Wifebun vs Husbun Beatdown Sesh!`;
     const body = [
-      `Hey!`,
+      `Hey Wifebun! 💕`,
       ``,
       `${sender} wants to throw paws in Wifebun vs Husbun Beatdown Sesh!`,
       ``,
-      `Click here to jump straight into the ring:`,
+      `Tap this link to jump straight into the ring as Wifebun:`,
       inviteUrl,
       ``,
-      `Or enter Match Code: ${roomCode}`,
+      `Or enter Match Code: ${cleanCode}`,
       ``,
       `Let's settle this! 🐰🥊`,
     ].join('\n');

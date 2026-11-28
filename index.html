@@ -28,12 +28,37 @@
   </div>
 
   <div id="app" class="app-shell">
-    <!-- Top Header -->
+    <!-- Unified Top Bar with Always-Accessible Quick Mode Switcher -->
     <header class="top-bar">
       <div class="brand" id="brand-home" title="Back to Lobby">
-        <span class="brand-badge">💕 1v1</span>
+        <span class="brand-badge">💕</span>
         <span class="brand-title">WIFEBUN <span class="accent-vs">♥</span> <span class="accent-blue">HUSBUN</span></span>
       </div>
+
+      <!-- 1-Click Quick Mode Switcher (Accessible from Lobby & Mid-Match) -->
+      <nav id="mode-switcher" class="mode-switcher" aria-label="Quick Mode Switcher">
+        <button type="button" id="nav-lobby" class="nav-pill active" data-nav="lobby" title="Return to Lobby">
+          <span class="nav-ico" aria-hidden="true">🏠</span>
+          <span class="nav-txt">Lobby</span>
+        </button>
+        <button type="button" id="nav-online" class="nav-pill nav-pill-online" data-nav="online" title="Online 1v1 Match">
+          <span class="nav-ico" aria-hidden="true">💌</span>
+          <span class="nav-txt">Online<span class="hide-xs"> 1v1</span></span>
+          <span id="nav-online-dot" class="nav-live-dot hidden" aria-hidden="true"></span>
+        </button>
+        <button type="button" id="nav-wifebun" class="nav-pill nav-pill-pink" data-nav="wifebun" title="1-Click Warmup as Wifebun vs CPU">
+          <span class="nav-ico" aria-hidden="true">🎀</span>
+          <span class="nav-txt"><span class="hide-xs">Play </span>Wifebun</span>
+        </button>
+        <button type="button" id="nav-husbun" class="nav-pill nav-pill-blue" data-nav="husbun" title="1-Click Warmup as Husbun vs CPU">
+          <span class="nav-ico" aria-hidden="true">💪</span>
+          <span class="nav-txt"><span class="hide-xs">Play </span>Husbun</span>
+        </button>
+        <button type="button" id="nav-local" class="nav-pill nav-pill-local" data-nav="local" title="1-Click Couch Local 2-Player">
+          <span class="nav-ico" aria-hidden="true">🎮</span>
+          <span class="nav-txt"><span class="hide-xs">Local </span>2P</span>
+        </button>
+      </nav>
 
       <div class="top-controls">
         <div id="user-pill" class="user-pill">
@@ -42,67 +67,62 @@
             <span id="user-name" class="user-name">Player</span>
             <span id="user-sub" class="user-sub">Guest</span>
           </div>
-          <button id="btn-auth-modal" class="icon-btn" title="Google Sign-In &amp; Profile">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <button id="btn-auth-modal" class="icon-btn" title="Google Sign-In &amp; Profile" aria-label="Profile Settings">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
         </div>
 
-        <button id="btn-sound" class="icon-btn" title="Toggle Sound">
-          <svg id="icon-sound-on" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-          <svg id="icon-sound-off" class="hidden" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+        <button id="btn-sound" class="icon-btn" title="Toggle Sound" aria-label="Toggle Sound">
+          <svg id="icon-sound-on" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+          <svg id="icon-sound-off" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
         </button>
       </div>
     </header>
 
-    <!-- LOBBY SCREEN (All 8 moves stay hidden as a surprise!) -->
+    <!-- LOBBY SCREEN (All 8 signature moves stay hidden as a surprise until entering the ring!) -->
     <main id="screen-lobby" class="screen active">
-      <div class="lobby-hero">
-        <div class="hero-tag">🌸 MOONLIT ROMANCE ARCADE FIGHTER 🌸</div>
+      <section class="lobby-hero">
+        <div class="hero-tag">🌸 MOONLIT PARISIAN 1v1 FIGHTER 🌸</div>
         <h1 class="hero-title">
           <span class="text-pink">WIFEBUN</span>
           <span class="hero-vs">♥</span>
           <span class="text-blue">HUSBUN</span>
-          <br />
           <span class="hero-sub-title">BEATDOWN SESH</span>
         </h1>
-        <p class="hero-subtitle">A flirty, Street-Fighter-style 1-on-1 bunny showdown under the Parisian moonlight — charge your Romance Super with guards &amp; timing, and step into the ring to unveil your secret moves.</p>
-      </div>
+        <p class="hero-subtitle">A flirty moonlit showdown — charge your Romance Super &amp; step into the ring to unveil your secret moves.</p>
 
-      <!-- Slanted Arcade Character Versus Banner (No move spoilers!) -->
-      <div class="duo-banner">
-        <div class="duo-pill duo-wifebun">
-          <span class="fighter-emoji">🎀🐰</span>
-          <div class="duo-copy">
-            <div class="duo-title-row">
+        <!-- Slim Fighter Role Strip (No move spoilers!) -->
+        <div class="duo-strip">
+          <div class="duo-chip duo-wifebun">
+            <span class="duo-emoji">🎀🐰</span>
+            <div class="duo-info">
               <strong>WIFEBUN</strong>
               <span class="role-chip chip-pink">INVITED PLAYER</span>
             </div>
-            <small>Alluring honey-caramel bunny &bull; 3 secret moves + Romance Super</small>
           </div>
-        </div>
-        <div class="duo-heart" aria-hidden="true"><span>VS</span><em>♥</em></div>
-        <div class="duo-pill duo-husbun">
-          <span class="fighter-emoji">💪🐰</span>
-          <div class="duo-copy">
-            <div class="duo-title-row">
+          <div class="duo-vs" aria-hidden="true">♥</div>
+          <div class="duo-chip duo-husbun">
+            <div class="duo-info duo-info-right">
               <strong>HUSBUN</strong>
               <span class="role-chip chip-blue">MATCH HOST</span>
             </div>
-            <small>Suave mocha-cocoa bunny &bull; 3 secret moves + Romance Super</small>
+            <span class="duo-emoji">💪🐰</span>
           </div>
         </div>
-      </div>
+      </section>
 
+      <!-- Symmetrical 2-Column Lobby Cards -->
       <div class="lobby-grid">
         <!-- Primary Card: Online 1v1 -->
-        <section class="card card-primary">
+        <section id="card-online" class="card card-primary">
           <div class="card-header">
-            <span class="card-pill pill-red">💕 ONLINE 1v1</span>
+            <span class="card-pill pill-red">💌 ONLINE 1v1</span>
             <h2>Invite Wifebun to Play</h2>
           </div>
 
+          <!-- Idle: Create or Join -->
           <div id="online-idle" class="online-panel">
-            <p class="role-note">💌 You host as <strong>Husbun</strong> — whoever joins your invite link automatically plays as <strong>Wifebun</strong>!</p>
+            <p class="role-note">Host plays <strong>Husbun 💪</strong> &bull; Invited player auto-joins as <strong>Wifebun 🎀</strong></p>
 
             <div class="rounds-row">
               <label for="rounds-selector">Match Format</label>
@@ -120,21 +140,25 @@
             <div class="divider"><span>OR JOIN AS WIFEBUN WITH CODE</span></div>
 
             <form id="form-join-room" class="join-row">
-              <input id="input-room-code" type="text" maxlength="6" placeholder="ENTER CODE (e.g. K7M2P9)" autocomplete="off" />
+              <input id="input-room-code" type="text" maxlength="8" placeholder="MATCH CODE" autocomplete="off" />
               <button type="submit" class="btn btn-blue">Join as Wifebun</button>
             </form>
           </div>
 
+          <!-- Waiting: Share Invite Link / Code / Gmail -->
           <div id="online-waiting" class="online-panel hidden">
             <div class="room-code-box">
-              <span class="room-label">SHARE THIS LINK — SHE JOINS AUTOMATICALLY AS WIFEBUN 🎀</span>
+              <div class="room-box-top">
+                <span class="room-label">INVITE LINK — AUTO-JOINS AS WIFEBUN 🎀</span>
+                <span id="waiting-relay-badge" class="relay-chip hidden"></span>
+              </div>
               <div class="share-link-row">
                 <input id="input-invite-link" type="text" readonly value="" aria-label="Match invite link" />
                 <button id="btn-copy-link" class="btn btn-blue btn-sm" type="button">Copy Link</button>
               </div>
               <div class="room-code-display">
                 <div>
-                  <span class="room-label">OR MATCH CODE</span>
+                  <span class="room-label">MATCH CODE</span>
                   <strong id="display-room-code">------</strong>
                 </div>
                 <button id="btn-share-native" class="btn btn-outline btn-sm" type="button">Share Invite</button>
@@ -149,76 +173,115 @@
               <label for="input-friend-email">Invite via Gmail</label>
               <div class="invite-row">
                 <input id="input-friend-email" type="email" placeholder="wifebun@gmail.com" autocomplete="email" />
-                <button id="btn-send-gmail" class="btn btn-gmail" type="button">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                <button id="btn-send-gmail" class="btn btn-gmail btn-sm" type="button">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
                   Gmail Invite
                 </button>
               </div>
-              <p class="hint-text">Opens Gmail with a 1-click join link straight into Wifebun vs Husbun.</p>
             </div>
 
-            <button id="btn-cancel-room" class="btn btn-ghost btn-full">Cancel Match</button>
+            <button id="btn-cancel-room" class="btn btn-ghost btn-sm btn-full">Cancel Match</button>
           </div>
 
+          <!-- Joining: Live Status & Retry -->
           <div id="online-joining" class="online-panel hidden">
             <div class="room-code-box">
-              <div class="status-pulse">
-                <span class="dot"></span>
-                <span id="joining-status">Joining as Wifebun...</span>
+              <span class="room-label">JOINING ONLINE 1v1 AS WIFEBUN 🎀</span>
+              <div class="status-pulse joining-pulse">
+                <span id="joining-dot" class="dot"></span>
+                <span id="joining-status">Connecting to Husbun...</span>
               </div>
             </div>
-            <button id="btn-cancel-join" class="btn btn-ghost btn-full">Cancel</button>
+            <div class="joining-actions">
+              <button id="btn-retry-join" class="btn btn-blue btn-full hidden" type="button">🔄 Retry Connection</button>
+              <button id="btn-cancel-join" class="btn btn-ghost btn-full" type="button">Cancel</button>
+            </div>
           </div>
         </section>
 
-        <!-- Secondary Card: Quick Play (Warmup & Local 2P) -->
-        <section class="card card-secondary">
+        <!-- Secondary Card: Instant Play (Solo Warmup & Local 2P) -->
+        <section id="card-quickplay" class="card card-secondary">
           <div class="card-header">
             <span class="card-pill pill-blue">✨ INSTANT PLAY</span>
-            <h2>Warmup: Wifebun vs Husbun</h2>
+            <h2>Warmup &amp; Couch 2P</h2>
           </div>
 
           <div class="quick-modes">
             <div class="mode-block">
-              <div class="mode-info">
-                <h3>Practice Solo (vs. CPU Bunny)</h3>
-                <p>Run, jump, dodge, guard to charge your Super, and preview either fighter in 1 click.</p>
+              <div class="mode-block-head">
+                <h3>Solo Warmup vs. CPU</h3>
+                <span class="mode-sub">Pick your bunny &amp; jump straight in</span>
               </div>
+
               <div class="warmup-quick-row">
-                <button class="btn btn-red btn-sm btn-warmup-side" data-side="wifebun">🎀 Play as Wifebun</button>
-                <button class="btn btn-blue btn-sm btn-warmup-side" data-side="husbun">💪 Play as Husbun</button>
+                <button type="button" class="btn btn-red btn-warmup-side" data-side="wifebun">🎀 Play Wifebun</button>
+                <button type="button" class="btn btn-blue btn-warmup-side" data-side="husbun">💪 Play Husbun</button>
               </div>
-              <div class="difficulty-row" id="cpu-diff-selector">
-                <button type="button" class="btn btn-outline btn-sm btn-diff" data-diff="easy">Easy CPU</button>
-                <button type="button" class="btn btn-outline btn-sm btn-diff active" data-diff="medium">Medium CPU</button>
-                <button type="button" class="btn btn-outline btn-sm btn-diff" data-diff="hard">Tough CPU</button>
+
+              <div class="diff-group">
+                <span class="diff-label">CPU Skill</span>
+                <div class="segmented" id="cpu-diff-selector">
+                  <button type="button" class="seg-btn btn-diff" data-diff="easy">Easy</button>
+                  <button type="button" class="seg-btn btn-diff active" data-diff="medium">Medium</button>
+                  <button type="button" class="seg-btn btn-diff" data-diff="hard">Tough</button>
+                </div>
               </div>
             </div>
 
-            <div class="mode-block">
-              <div class="mode-info">
-                <h3>Couch 2-Player (Same Keyboard)</h3>
-                <p>Wifebun: <kbd>A</kbd><kbd>D</kbd> Move, <kbd>W</kbd> Jump, <kbd>S</kbd> Guard, <kbd>Q</kbd> Dodge, <kbd>1</kbd>–<kbd>4</kbd> Moves &bull; Husbun: <kbd>←</kbd><kbd>→</kbd> Move, <kbd>↑</kbd> Jump, <kbd>↓</kbd> Guard, <kbd>Shift</kbd> Dodge, <kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>U</kbd></p>
+            <div class="mode-block mode-block-local">
+              <div class="mode-block-head">
+                <h3>Couch Local 2-Player</h3>
+                <span class="mode-sub">Same keyboard — Wifebun vs. Husbun</span>
               </div>
-              <button id="btn-local-2p" class="btn btn-dark btn-full">Play Wifebun vs Husbun (Local 2P)</button>
+              <button id="btn-local-2p" type="button" class="btn btn-dark btn-full">🎮 Play Local 2P</button>
             </div>
-          </div>
-
-          <div class="controls-legend">
-            <h4>♥ COMBAT RULES ♥</h4>
-            <ul>
-              <li><strong>Move &amp; Jump</strong>: <kbd>A</kbd> / <kbd>D</kbd> (or <kbd>←</kbd> <kbd>→</kbd>) to run, <kbd>W</kbd> (or <kbd>↑</kbd>) to jump.</li>
-              <li><strong>Dodge</strong> (<kbd>Space</kbd> / <kbd>Shift</kbd>): Takes <strong>0 damage</strong> with afterimages + fills Super!</li>
-              <li><strong>Guard</strong> (<kbd>S</kbd> / <kbd>↓</kbd>): Tiny chip damage &amp; <strong>rapidly charges your Special Super</strong>!</li>
-              <li><strong>Special Super</strong> (<kbd>U</kbd> / <kbd>4</kbd>): Charges over time + with every block — unleash at <strong>100%</strong>!</li>
-            </ul>
           </div>
         </section>
       </div>
+
+      <!-- Collapsible Controls & Rules Drawer (Keeps Lobby Uncluttered!) -->
+      <details id="rules-drawer" class="rules-drawer">
+        <summary class="rules-summary">
+          <span>📖 Controls &amp; Combat Rules</span>
+          <span class="rules-chevron" aria-hidden="true">▾</span>
+        </summary>
+        <div class="rules-content">
+          <div class="rules-col">
+            <h4>♥ COMBAT RULES</h4>
+            <ul>
+              <li><strong>Move &amp; Jump</strong>: <kbd>A</kbd><kbd>D</kbd> (or <kbd>←</kbd><kbd>→</kbd>) to run, <kbd>W</kbd> (or <kbd>↑</kbd>) to jump.</li>
+              <li><strong>Dodge</strong> (<kbd>Space</kbd> / <kbd>Shift</kbd>): <strong>0 damage</strong> with afterimages + fills Super!</li>
+              <li><strong>Guard</strong> (<kbd>S</kbd> / <kbd>↓</kbd>): Tiny chip damage &amp; <strong>rapidly charges Special Super</strong>!</li>
+              <li><strong>Special Super</strong> (<kbd>U</kbd> / <kbd>4</kbd>): Charges over time &amp; on blocks — unleash at <strong>100%</strong>!</li>
+            </ul>
+          </div>
+          <div class="rules-col">
+            <h4>🎮 KEYBOARD LAYOUTS</h4>
+            <ul>
+              <li><strong>Solo / Online 1v1</strong>: Move with <kbd>WASD</kbd> or <kbd>Arrows</kbd>, Dodge <kbd>Space</kbd>, Moves <kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>U</kbd> or <kbd>1</kbd>–<kbd>4</kbd>.</li>
+              <li><strong>Local 2P — Wifebun</strong>: <kbd>A</kbd><kbd>D</kbd> Move, <kbd>W</kbd> Jump, <kbd>S</kbd> Guard, <kbd>Q</kbd> Dodge, <kbd>1</kbd>–<kbd>4</kbd> Moves.</li>
+              <li><strong>Local 2P — Husbun</strong>: <kbd>←</kbd><kbd>→</kbd> Move, <kbd>↑</kbd> Jump, <kbd>↓</kbd> Guard, <kbd>Shift</kbd> Dodge, <kbd>J</kbd><kbd>K</kbd><kbd>L</kbd><kbd>U</kbd> Moves.</li>
+            </ul>
+          </div>
+        </div>
+      </details>
     </main>
 
     <!-- GAME ARENA SCREEN -->
     <main id="screen-game" class="screen">
+      <!-- Slim Contextual Warmup Bar (Instant Bunny Swap & CPU Difficulty Mid-Match!) -->
+      <div id="arena-warmup-bar" class="arena-warmup-bar hidden">
+        <div class="arena-warmup-left">
+          <span class="arena-tag">✨ WARMUP VS CPU</span>
+          <div class="arena-diff-pills" id="arena-diff-selector" role="group" aria-label="CPU Difficulty">
+            <button type="button" class="mini-pill btn-arena-diff" data-diff="easy">Easy</button>
+            <button type="button" class="mini-pill btn-arena-diff active" data-diff="medium">Medium</button>
+            <button type="button" class="mini-pill btn-arena-diff" data-diff="hard">Tough</button>
+          </div>
+        </div>
+        <button type="button" id="btn-arena-switch-bunny" class="mini-pill mini-pill-swap">⇄ Switch Bunny</button>
+      </div>
+
       <!-- Capcom / Guilty Gear Fighting-Game HUD -->
       <div class="hud">
         <!-- Wifebun (Left) -->
@@ -249,7 +312,7 @@
             </div>
             <div class="super-row">
               <div class="bar-label super-label-row">
-                <span>✨ SPECIAL SUPER</span>
+                <span>✨ <span class="hide-xs">SPECIAL </span>SUPER</span>
                 <span id="hud-red-super-val" class="super-val">0%</span>
               </div>
               <div class="bar-frame bar-frame-super bar-frame-left">
@@ -302,7 +365,7 @@
             <div class="super-row">
               <div class="bar-label super-label-row">
                 <span id="hud-blue-super-val" class="super-val">0%</span>
-                <span>SPECIAL SUPER ✨</span>
+                <span><span class="hide-xs">SPECIAL </span>SUPER ✨</span>
               </div>
               <div class="bar-frame bar-frame-super bar-frame-right">
                 <div class="bar-track bar-super">
@@ -333,8 +396,9 @@
             <h2 id="match-winner-title">WIFEBUN WINS!</h2>
             <p id="match-winner-sub">Final Score: 2 - 0</p>
             <div class="match-actions">
-              <button id="btn-rematch" class="btn btn-red btn-lg btn-sheen">Rematch 💕</button>
-              <button id="btn-back-lobby" class="btn btn-ghost btn-lg">Back to Lobby</button>
+              <button id="btn-rematch" class="btn btn-red btn-sheen">Rematch 💕</button>
+              <button id="btn-switch-bunny" class="btn btn-blue hidden">⇄ Switch Bunny</button>
+              <button id="btn-back-lobby" class="btn btn-ghost">Lobby</button>
             </div>
             <p id="rematch-status" class="hint-text hidden"></p>
           </div>
@@ -344,24 +408,24 @@
       <!-- 2D Fighter Control Deck (Movement D-Pad + 3 Moves + Special Super) -->
       <div class="fighter-deck" id="controls-p1">
         <div class="dpad-cluster">
-          <button class="arcade-btn btn-nav" data-action="left" title="Move Left (A)">
+          <button type="button" class="arcade-btn btn-nav" data-action="left" title="Move Left (A)">
             <span class="btn-emoji">◀</span>
             <kbd>A</kbd>
           </button>
-          <button class="arcade-btn btn-nav" data-action="jump" title="Jump (W)">
+          <button type="button" class="arcade-btn btn-nav" data-action="jump" title="Jump (W)">
             <span class="btn-emoji">▲</span>
             <kbd>W</kbd>
           </button>
-          <button class="arcade-btn btn-nav" data-action="right" title="Move Right (D)">
+          <button type="button" class="arcade-btn btn-nav" data-action="right" title="Move Right (D)">
             <span class="btn-emoji">▶</span>
             <kbd>D</kbd>
           </button>
-          <button class="arcade-btn btn-block" data-action="block" title="Guard (S) — Tiny chip + charges Super!">
+          <button type="button" class="arcade-btn btn-block" data-action="block" title="Guard (S) — Tiny chip + charges Super!">
             <span class="btn-emoji">🛡️</span>
             <span class="btn-cap">GUARD</span>
             <kbd>S</kbd>
           </button>
-          <button class="arcade-btn btn-dodge" data-action="dodge" title="Dodge Roll (Space / Shift) — 0 Damage!">
+          <button type="button" class="arcade-btn btn-dodge" data-action="dodge" title="Dodge Roll (Space / Shift) — 0 Damage!">
             <span class="btn-emoji">✨</span>
             <span class="btn-cap">DODGE</span>
             <kbd>Space</kbd>
@@ -369,31 +433,31 @@
         </div>
 
         <div class="moves-cluster">
-          <button class="arcade-btn btn-move" data-action="move0">
-            <span class="btn-emoji" id="move0-emoji">🍐</span>
-            <span class="btn-cap" id="move0-label">PEAR BOUNCE</span>
+          <button type="button" class="arcade-btn btn-move" data-action="move0">
+            <span class="btn-emoji" id="move0-emoji">✨</span>
+            <span class="btn-cap" id="move0-label">MOVE 1</span>
             <kbd>J / 1</kbd>
           </button>
-          <button class="arcade-btn btn-move" data-action="move1">
-            <span class="btn-emoji" id="move1-emoji">🎧</span>
-            <span class="btn-cap" id="move1-label">DJ SPIN</span>
+          <button type="button" class="arcade-btn btn-move" data-action="move1">
+            <span class="btn-emoji" id="move1-emoji">✨</span>
+            <span class="btn-cap" id="move1-label">MOVE 2</span>
             <kbd>K / 2</kbd>
           </button>
-          <button class="arcade-btn btn-move" data-action="move2">
-            <span class="btn-emoji" id="move2-emoji">🥤</span>
-            <span class="btn-cap" id="move2-label">COKE BURP</span>
+          <button type="button" class="arcade-btn btn-move" data-action="move2">
+            <span class="btn-emoji" id="move2-emoji">✨</span>
+            <span class="btn-cap" id="move2-label">MOVE 3</span>
             <kbd>L / 3</kbd>
           </button>
-          <button class="arcade-btn btn-super" id="btn-super-move" data-action="move3">
+          <button type="button" class="arcade-btn btn-super" id="btn-super-move" data-action="move3">
             <div class="super-charge-bg" id="super-charge-bg" style="width: 0%"></div>
             <span class="super-badge" id="super-badge">SUPER 0%</span>
-            <span class="btn-emoji" id="move3-emoji">🥭</span>
-            <span class="btn-cap" id="move3-label">MANGO SEED SPECIAL</span>
+            <span class="btn-emoji" id="move3-emoji">🌟</span>
+            <span class="btn-cap" id="move3-label">SPECIAL SUPER</span>
             <kbd>U / 4</kbd>
           </button>
         </div>
 
-        <button id="btn-exit-match" class="btn btn-ghost btn-sm exit-btn-inline">Leave</button>
+        <button type="button" id="btn-exit-match" class="btn btn-ghost btn-sm exit-btn-inline">Leave</button>
       </div>
     </main>
 

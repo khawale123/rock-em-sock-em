@@ -8,6 +8,8 @@ const $ = (id) => document.getElementById(id);
 
 const els = {
   brandHome: $('brand-home'),
+  modeSwitcher: $('mode-switcher'),
+  navOnlineDot: $('nav-online-dot'),
   userAvatar: $('user-avatar'),
   userName: $('user-name'),
   userSub: $('user-sub'),
@@ -18,6 +20,7 @@ const els = {
 
   screenLobby: $('screen-lobby'),
   screenGame: $('screen-game'),
+  cardOnline: $('card-online'),
 
   roundsSelector: $('rounds-selector'),
   onlineIdle: $('online-idle'),
@@ -28,15 +31,22 @@ const els = {
   inputRoomCode: $('input-room-code'),
   inputInviteLink: $('input-invite-link'),
   displayRoomCode: $('display-room-code'),
+  waitingRelayBadge: $('waiting-relay-badge'),
   btnCopyLink: $('btn-copy-link'),
   btnShareNative: $('btn-share-native'),
   waitingStatus: $('waiting-status'),
   joiningStatus: $('joining-status'),
+  joiningDot: $('joining-dot'),
+  btnRetryJoin: $('btn-retry-join'),
   inputFriendEmail: $('input-friend-email'),
   btnSendGmail: $('btn-send-gmail'),
   btnCancelRoom: $('btn-cancel-room'),
   btnCancelJoin: $('btn-cancel-join'),
   btnLocal2p: $('btn-local-2p'),
+
+  arenaWarmupBar: $('arena-warmup-bar'),
+  arenaDiffSelector: $('arena-diff-selector'),
+  btnArenaSwitchBunny: $('btn-arena-switch-bunny'),
 
   canvas: $('game-canvas'),
   stageBanner: $('stage-banner'),
@@ -79,6 +89,7 @@ const els = {
   matchWinnerTitle: $('match-winner-title'),
   matchWinnerSub: $('match-winner-sub'),
   btnRematch: $('btn-rematch'),
+  btnSwitchBunny: $('btn-switch-bunny'),
   btnBackLobby: $('btn-back-lobby'),
   rematchStatus: $('rematch-status'),
 
@@ -100,20 +111,50 @@ const els = {
 };
 
 let selectedBestOf = 3;
-let warmupSide = 'wifebun'; // used in solo warmup vs CPU
+let warmupSide = 'wifebun'; // 'wifebun' | 'husbun' for solo warmup vs CPU
 let mySide = 'red';         // 'red' (Wifebun) | 'blue' (Husbun)
 let currentMode = 'cpu';    // 'cpu' | 'local' | 'online-host' | 'online-guest'
 let currentCpuDiff = 'medium';
 let opponentProfile = { name: 'Opponent', email: '', picture: '' };
 let myRematchReady = false;
 let oppRematchReady = false;
+let lastJoinCode = '';
 let toastTimer = null;
+let onlineGlowTimer = null;
 
 function showToast(msg, duration = 2600) {
   els.toast.textContent = msg;
   els.toast.classList.remove('hidden');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => els.toast.classList.add('hidden'), duration);
+}
+
+function setActiveNav(navId) {
+  if (!els.modeSwitcher) return;
+  els.modeSwitcher.querySelectorAll('.nav-pill').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.nav === navId);
+  });
+}
+
+function updateOnlineLiveDot() {
+  if (!els.navOnlineDot) return;
+  const live = Boolean(net && (net.roomCode || net.isConnected()));
+  els.navOnlineDot.classList.toggle('hidden', !live);
+}
+
+function syncCpuDiffUI(diff) {
+  currentCpuDiff = diff || 'medium';
+  document.querySelectorAll('.btn-diff, .btn-arena-diff').forEach((b) => {
+    b.classList.toggle('active', b.dataset.diff === currentCpuDiff);
+  });
+}
+
+function syncSwitchBunnyLabels() {
+  const nextLabel = warmupSide === 'wifebun' ? '⇄ Play Husbun' : '⇄ Play Wifebun';
+  if (els.btnArenaSwitchBunny) els.btnArenaSwitchBunny.textContent = nextLabel;
+  if (els.btnSwitchBunny) {
+    els.btnSwitchBunny.textContent = warmupSide === 'wifebun' ? '💪 Switch to Husbun' : '🎀 Switch to Wifebun';
+  }
 }
 
 function renderAvatar(el, profile, fallbackEmoji) {
@@ -138,6 +179,28 @@ function updateMoveDeckForSide(side) {
     if (labelEl) labelEl.textContent = m.label;
   });
   els.controlsP1.classList.toggle('theme-blue', side === 'blue');
+}
+
+function clearMoveDeckSpoilers() {
+  const defaults = [
+    { emoji: '✨', label: 'MOVE 1' },
+    { emoji: '✨', label: 'MOVE 2' },
+    { emoji: '✨', label: 'MOVE 3' },
+    { emoji: '🌟', label: 'SPECIAL SUPER' },
+  ];
+  defaults.forEach((d, idx) => {
+    const emojiEl = $(`move${idx}-emoji`);
+    const labelEl = $(`move${idx}-label`);
+    if (emojiEl) emojiEl.textContent = d.emoji;
+    if (labelEl) labelEl.textContent = d.label;
+  });
+}
+
+function setJoiningState(text, isError = false) {
+  els.joiningStatus.textContent = text;
+  const pulseWrap = els.joiningStatus.closest('.status-pulse');
+  if (pulseWrap) pulseWrap.classList.toggle('is-error', isError);
+  els.btnRetryJoin.classList.toggle('hidden', !isError || !lastJoinCode);
 }
 
 // ==========================
@@ -212,7 +275,6 @@ const engine = new GameEngine(els.canvas, {
     els.hudBlueSuper.classList.toggle('super-max', blueSuper >= 100);
     els.hudBlueSuperVal.textContent = blueSuper >= 100 ? 'MAX ★' : `${blueSuper}%`;
 
-    // Sync active player's Special Super button fill & glow!
     const activeSide = currentMode === 'local' ? 'red' : mySide;
     const mySuper = activeSide === 'red' ? redSuper : blueSuper;
     els.superChargeBg.style.width = `${mySuper}%`;
@@ -234,6 +296,10 @@ const engine = new GameEngine(els.canvas, {
     oppRematchReady = false;
     els.rematchStatus.classList.add('hidden');
     els.btnRematch.disabled = false;
+
+    const isWarmup = currentMode === 'cpu';
+    els.btnSwitchBunny.classList.toggle('hidden', !isWarmup);
+    if (isWarmup) syncSwitchBunnyLabels();
 
     const winnerName = winner === 'red' ? 'WIFEBUN' : 'HUSBUN';
     els.matchResultBadge.textContent = '💕 BEATDOWN SESH COMPLETE! 💕';
@@ -262,15 +328,45 @@ function renderRoundPips(container, total, won, wonClass) {
 // NETWORKING (ONLINE 1v1 — Host is ALWAYS Husbun, Invited Guest is ALWAYS Wifebun!)
 // ==========================
 const net = new NetworkManager({
+  onStatus: (statusMsg, meta = {}) => {
+    if (!statusMsg) return;
+    if (els.waitingRelayBadge && meta.relay) {
+      els.waitingRelayBadge.textContent = `⚡ ${meta.relay}`;
+      els.waitingRelayBadge.classList.remove('hidden');
+    }
+    if (els.screenGame.classList.contains('active') && (currentMode === 'online-host' || currentMode === 'online-guest')) {
+      if (meta.reconnecting) {
+        els.hudNetBadge.classList.add('is-reconnecting');
+        els.hudPing.textContent = 'Reconnecting...';
+      } else if (meta.connected) {
+        els.hudNetBadge.classList.remove('is-reconnecting');
+        if (els.hudPing.textContent === 'Reconnecting...') {
+          els.hudPing.textContent = 'Online';
+        }
+      }
+      return;
+    }
+    if (!els.onlineWaiting.classList.contains('hidden')) {
+      els.waitingStatus.textContent = statusMsg;
+    } else if (!els.onlineJoining.classList.contains('hidden')) {
+      setJoiningState(statusMsg, false);
+    } else if (els.btnCreateRoom && els.btnCreateRoom.disabled) {
+      els.btnCreateRoom.textContent = statusMsg;
+    }
+  },
+
   onConnect: (role) => {
+    updateOnlineLiveDot();
+    els.hudNetBadge.classList.remove('is-reconnecting');
     if (role === 'host') {
       els.waitingStatus.textContent = 'Wifebun connected! Starting beatdown sesh...';
     } else {
-      els.joiningStatus.textContent = 'Connected! Stepping in as Wifebun...';
+      setJoiningState('Connected! Stepping in as Wifebun...', false);
     }
   },
 
   onPing: (ms) => {
+    els.hudNetBadge.classList.remove('is-reconnecting');
     els.hudPing.textContent = `${ms} ms`;
   },
 
@@ -346,6 +442,7 @@ const net = new NetworkManager({
   },
 
   onDisconnect: () => {
+    updateOnlineLiveDot();
     if (currentMode === 'online-host' || currentMode === 'online-guest') {
       showToast('Opponent left the match.', 3500);
       returnToLobby();
@@ -358,18 +455,36 @@ const net = new NetworkManager({
 });
 
 // ==========================
-// SCREEN FLOW
+// SCREEN FLOW & QUICK MODE NAVIGATION
 // ==========================
 function setOnlinePanel(panel) {
   els.onlineIdle.classList.toggle('hidden', panel !== 'idle');
   els.onlineWaiting.classList.toggle('hidden', panel !== 'waiting');
   els.onlineJoining.classList.toggle('hidden', panel !== 'joining');
+  updateOnlineLiveDot();
+}
+
+function clearRoomQueryParam() {
+  const url = new URL(window.location.href);
+  if (url.searchParams.has('room')) {
+    url.searchParams.delete('room');
+    window.history.replaceState({}, '', url.toString());
+  }
+}
+
+function disconnectIfOnline() {
+  if (net.roomCode || net.isConnected() || currentMode === 'online-host' || currentMode === 'online-guest') {
+    net.disconnect(true);
+    setOnlinePanel('idle');
+    clearRoomQueryParam();
+  }
 }
 
 function launchMatch(mode, cpuDiff = currentCpuDiff) {
   sound.init();
+  releaseAllHeldInputs();
   currentMode = mode;
-  currentCpuDiff = cpuDiff;
+  syncCpuDiffUI(cpuDiff);
   myRematchReady = false;
   oppRematchReady = false;
 
@@ -385,20 +500,24 @@ function launchMatch(mode, cpuDiff = currentCpuDiff) {
       redProfile = { name: 'WIFEBUN (CPU)', picture: '' };
       blueProfile = { name: 'HUSBUN', picture: me.picture };
     }
+    setActiveNav(warmupSide === 'husbun' ? 'husbun' : 'wifebun');
   } else if (mode === 'local') {
     mySide = 'red';
     redProfile = { name: 'WIFEBUN', picture: '' };
     blueProfile = { name: 'HUSBUN', picture: '' };
+    setActiveNav('local');
   } else if (mode === 'online-host') {
     // Host is ALWAYS Husbun ('blue'), Invited player is ALWAYS Wifebun ('red')!
     mySide = 'blue';
     redProfile = { name: `WIFEBUN (${opponentProfile.name})`, picture: opponentProfile.picture };
     blueProfile = { name: `HUSBUN (${me.name})`, picture: me.picture };
+    setActiveNav('online');
   } else {
     // Invited guest is ALWAYS Wifebun ('red')!
     mySide = 'red';
     redProfile = { name: `WIFEBUN (${me.name})`, picture: me.picture };
     blueProfile = { name: `HUSBUN (${opponentProfile.name})`, picture: opponentProfile.picture };
+    setActiveNav('online');
   }
 
   renderAvatar(els.hudRedAvatar, redProfile, '🎀');
@@ -410,29 +529,122 @@ function launchMatch(mode, cpuDiff = currentCpuDiff) {
   els.hudBlueTag.classList.toggle('hidden', mode === 'local' || mySide !== 'blue');
   els.hudNetBadge.classList.toggle('hidden', !(mode === 'online-host' || mode === 'online-guest'));
 
+  const isWarmup = mode === 'cpu';
+  els.arenaWarmupBar.classList.toggle('hidden', !isWarmup);
+  els.screenGame.classList.toggle('has-warmup-bar', isWarmup);
+  if (isWarmup) syncSwitchBunnyLabels();
+
   updateMoveDeckForSide(mySide);
+  updateOnlineLiveDot();
 
   els.matchOverlay.classList.add('hidden');
   els.screenLobby.classList.remove('active');
   els.screenGame.classList.add('active');
 
-  engine.startMatch({ mode, bestOf: selectedBestOf, cpuDifficulty: cpuDiff, humanSide: mySide });
+  engine.startMatch({ mode, bestOf: selectedBestOf, cpuDifficulty: currentCpuDiff, humanSide: mySide });
 }
 
-function returnToLobby() {
+function returnToLobby({ keepOnlineRoom = false, navTarget = 'lobby' } = {}) {
   releaseAllHeldInputs();
-  net.disconnect(true);
-  setOnlinePanel('idle');
+  if (!keepOnlineRoom) {
+    net.disconnect(true);
+    setOnlinePanel('idle');
+    clearRoomQueryParam();
+  }
   els.matchOverlay.classList.add('hidden');
   els.screenGame.classList.remove('active');
+  els.screenGame.classList.remove('has-warmup-bar');
   els.screenLobby.classList.add('active');
   engine.phase = 'idle';
+  clearMoveDeckSpoilers();
+  setActiveNav(navTarget);
+  updateOnlineLiveDot();
+}
 
-  const url = new URL(window.location.href);
-  if (url.searchParams.has('room')) {
-    url.searchParams.delete('room');
-    window.history.replaceState({}, '', url.toString());
-  }
+function focusOnlineCard() {
+  if (!els.cardOnline) return;
+  els.cardOnline.classList.add('card-focus-glow');
+  els.cardOnline.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  clearTimeout(onlineGlowTimer);
+  onlineGlowTimer = setTimeout(() => {
+    els.cardOnline.classList.remove('card-focus-glow');
+  }, 1600);
+}
+
+// Quick Mode Switcher Handler (1-Click Navigation from ANY Screen!)
+if (els.modeSwitcher) {
+  els.modeSwitcher.addEventListener('click', (e) => {
+    const pill = e.target.closest('.nav-pill');
+    if (!pill) return;
+    const nav = pill.dataset.nav;
+    sound.init();
+
+    if (nav === 'lobby') {
+      returnToLobby({ keepOnlineRoom: false, navTarget: 'lobby' });
+      return;
+    }
+
+    if (nav === 'online') {
+      const inOnlineMatch =
+        (currentMode === 'online-host' || currentMode === 'online-guest') &&
+        els.screenGame.classList.contains('active');
+      if (inOnlineMatch) {
+        setActiveNav('online');
+        return;
+      }
+      const hasWaitingRoom = Boolean(net.roomCode && !els.onlineWaiting.classList.contains('hidden'));
+      returnToLobby({ keepOnlineRoom: hasWaitingRoom, navTarget: 'online' });
+      focusOnlineCard();
+      return;
+    }
+
+    if (nav === 'wifebun') {
+      disconnectIfOnline();
+      warmupSide = 'wifebun';
+      launchMatch('cpu', currentCpuDiff);
+      return;
+    }
+
+    if (nav === 'husbun') {
+      disconnectIfOnline();
+      warmupSide = 'husbun';
+      launchMatch('cpu', currentCpuDiff);
+      return;
+    }
+
+    if (nav === 'local') {
+      disconnectIfOnline();
+      launchMatch('local');
+      return;
+    }
+  });
+}
+
+function switchWarmupBunny() {
+  warmupSide = warmupSide === 'wifebun' ? 'husbun' : 'wifebun';
+  launchMatch('cpu', currentCpuDiff);
+}
+
+if (els.btnArenaSwitchBunny) {
+  els.btnArenaSwitchBunny.addEventListener('click', switchWarmupBunny);
+}
+
+if (els.btnSwitchBunny) {
+  els.btnSwitchBunny.addEventListener('click', switchWarmupBunny);
+}
+
+if (els.arenaDiffSelector) {
+  els.arenaDiffSelector.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-arena-diff');
+    if (!btn) return;
+    const diff = btn.dataset.diff || 'medium';
+    if (diff === currentCpuDiff) return;
+    syncCpuDiffUI(diff);
+    if (currentMode === 'cpu' && els.screenGame.classList.contains('active')) {
+      launchMatch('cpu', currentCpuDiff);
+      showToast(`CPU set to ${diff.charAt(0).toUpperCase() + diff.slice(1)}!`);
+    }
+  });
 }
 
 // ==========================
@@ -454,7 +666,15 @@ els.btnCreateRoom.addEventListener('click', async () => {
     els.displayRoomCode.textContent = code;
     els.inputInviteLink.value = auth.buildInviteUrl(code);
     els.waitingStatus.textContent = 'Waiting for Wifebun to hop in...';
+
+    if (els.waitingRelayBadge) {
+      const relayName = typeof net.getRelayName === 'function' ? net.getRelayName() : '';
+      els.waitingRelayBadge.textContent = relayName ? `⚡ ${relayName}` : '';
+      els.waitingRelayBadge.classList.toggle('hidden', !relayName);
+    }
+
     setOnlinePanel('waiting');
+    setActiveNav('online');
   } catch (err) {
     showToast(err.message || 'Could not create match.', 3500);
   } finally {
@@ -514,22 +734,51 @@ els.btnSendGmail.addEventListener('click', () => {
 els.btnCancelRoom.addEventListener('click', () => {
   net.disconnect();
   setOnlinePanel('idle');
+  setActiveNav('lobby');
 });
 
 els.btnCancelJoin.addEventListener('click', () => {
   net.disconnect();
+  lastJoinCode = '';
+  clearRoomQueryParam();
   setOnlinePanel('idle');
+  setActiveNav('lobby');
+});
+
+els.btnRetryJoin.addEventListener('click', async () => {
+  const code = lastJoinCode || (typeof net.getLastJoinCode === 'function' ? net.getLastJoinCode() : '');
+  if (!code) return;
+  if (typeof net.retry === 'function') {
+    sound.init();
+    setOnlinePanel('joining');
+    setActiveNav('online');
+    setJoiningState(`Retrying match ${code} as Wifebun...`, false);
+    try {
+      await net.retry();
+    } catch (err) {
+      const msg = err?.message || 'Could not reach Husbun. Tap Retry once he opens the match.';
+      setJoiningState(msg, true);
+      showToast(msg, 3800);
+    }
+  } else {
+    handleJoinCode(code);
+  }
 });
 
 async function handleJoinCode(code) {
+  const clean = (code || '').trim().toUpperCase();
+  if (!clean) return;
+  lastJoinCode = clean;
   sound.init();
   setOnlinePanel('joining');
-  els.joiningStatus.textContent = `Joining match ${code.toUpperCase()} as Wifebun...`;
+  setActiveNav('online');
+  setJoiningState(`Joining match ${clean} as Wifebun...`, false);
   try {
-    await net.joinRoom(code, auth.getProfile());
+    await net.joinRoom(clean, auth.getProfile());
   } catch (err) {
-    showToast(err.message || 'Could not join match.', 3600);
-    setOnlinePanel('idle');
+    const msg = err?.message || 'Could not reach Husbun. Tap Retry once he opens the match.';
+    setJoiningState(msg, true);
+    showToast(msg, 3800);
   }
 }
 
@@ -537,7 +786,7 @@ els.formJoinRoom.addEventListener('submit', (e) => {
   e.preventDefault();
   const code = els.inputRoomCode.value.trim();
   if (!code) {
-    showToast('Enter a 6-character match code first.');
+    showToast('Enter a match code first.');
     return;
   }
   handleJoinCode(code);
@@ -545,30 +794,29 @@ els.formJoinRoom.addEventListener('submit', (e) => {
 
 document.querySelectorAll('.btn-diff').forEach((btn) => {
   btn.addEventListener('click', () => {
-    currentCpuDiff = btn.dataset.diff || 'medium';
-    document.querySelectorAll('.btn-diff').forEach((b) => b.classList.toggle('active', b === btn));
+    syncCpuDiffUI(btn.dataset.diff || 'medium');
   });
 });
 
 document.querySelectorAll('.btn-warmup-side').forEach((btn) => {
   btn.addEventListener('click', () => {
+    disconnectIfOnline();
     warmupSide = btn.dataset.side || 'wifebun';
     launchMatch('cpu', currentCpuDiff);
   });
 });
 
 els.btnLocal2p.addEventListener('click', () => {
+  disconnectIfOnline();
   launchMatch('local');
 });
 
 els.brandHome.addEventListener('click', () => {
-  if (els.screenGame.classList.contains('active')) {
-    returnToLobby();
-  }
+  returnToLobby({ keepOnlineRoom: false, navTarget: 'lobby' });
 });
 
-els.btnExitMatch.addEventListener('click', returnToLobby);
-els.btnBackLobby.addEventListener('click', returnToLobby);
+els.btnExitMatch.addEventListener('click', () => returnToLobby({ keepOnlineRoom: false, navTarget: 'lobby' }));
+els.btnBackLobby.addEventListener('click', () => returnToLobby({ keepOnlineRoom: false, navTarget: 'lobby' }));
 
 els.btnRematch.addEventListener('click', () => {
   if (currentMode === 'cpu' || currentMode === 'local') {
@@ -842,6 +1090,5 @@ const urlParams = new URLSearchParams(window.location.search);
 const inviteRoom = urlParams.get('room');
 if (inviteRoom) {
   els.inputRoomCode.value = inviteRoom.toUpperCase();
-  // Fire immediately (waitForMqtt inside joinRoom safely waits for the MQTT script!)
   handleJoinCode(inviteRoom);
 }
